@@ -2,7 +2,7 @@ import sys
 
 import numpy
 import pandas
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 
 
 class ArmaViewer(QWidget):
@@ -12,10 +12,15 @@ class ArmaViewer(QWidget):
 
     def initUI(self):
         self.setWindowTitle('ARMA3 RS Image Viewer')
-        self.move(300, 300)
         self.resize(1000, 800)
+        self.center()
         self.show()
 
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
 if __name__ == '__main__':
     viewer = QApplication(sys.argv)
