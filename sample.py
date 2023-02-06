@@ -2,7 +2,8 @@ import sys
 
 import numpy
 import pandas
-from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, \
+    QGroupBox, QHBoxLayout, QGridLayout, QVBoxLayout
 
 
 class ArmaViewer(QWidget):
@@ -11,10 +12,52 @@ class ArmaViewer(QWidget):
         self.initUI()
 
     def initUI(self):
+        hbox = QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addWidget(self.createImageGroup())
+        hbox.addWidget(self.createLabelGroup())
+        hbox.addStretch(1)
+
+        vbox = QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addLayout(hbox)
+        vbox.addStretch(1)
+
+        self.setLayout(vbox)
         self.setWindowTitle('ARMA3 RS Image Viewer')
         self.resize(1000, 800)
         self.center()
         self.show()
+
+    def createImageGroup(self):
+        groupbox = QGroupBox('Image Setting')
+
+        eo_radiobtn = QRadioButton('EO', self)
+        ir_radiobtn = QRadioButton('IR', self)
+        eoir_radiobtn = QRadioButton('EO+IR', self)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(eo_radiobtn)
+        hbox.addWidget(ir_radiobtn)
+        hbox.addWidget(eoir_radiobtn)
+        groupbox.setLayout(hbox)
+
+        return groupbox
+
+    def createLabelGroup(self):
+        groupbox = QGroupBox('Label Setting')
+
+        centerpoint_radiobtn = QRadioButton('Center Point', self)
+        bbox_radiobtn = QRadioButton('BBOX', self)
+        label_radiobtn = QRadioButton('Label', self)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(centerpoint_radiobtn)
+        hbox.addWidget(bbox_radiobtn)
+        hbox.addWidget(label_radiobtn)
+        groupbox.setLayout(hbox)
+
+        return groupbox
 
     def center(self):
         qr = self.frameGeometry()
