@@ -14,18 +14,31 @@ class ArmaViewer(QWidget):
         super().__init__()
         self.initUI()
 
+    def extractFileNames(self, folder):
+
     def initUI(self):
 
         # Horizontal 폴더 열기 & 폴더명
-        options = QFileDialog.Options()
-        options |= QFileDialog.ShowDirsOnly
-        folderpath = QFileDialog.getExistingDirectory(self, 'Select Folder')
-        folderlabel = QLabel('폴더명 : ' + folderpath)
+        folderSelectBtn = QPushButton('&폴더 열기', self)
+
+        # options = QFileDialog.Options()
+        # options |= QFileDialog.ShowDirsOnly
+        filepath = QFileDialog.getExistingDirectory(self, 'Select Folder')
+        split_name = filepath.split('/')
+        folder_name = '/'.join(split_name[:-1])
+        filename = split_name[-1]
+        folderlabel = QLabel(f'폴더명 : {folder_name}')
+
 
         fhbox = QHBoxLayout()
         fhbox.addStretch(1)
+        fhbox.addWidget(folderSelectBtn)
         fhbox.addWidget(folderlabel)
         fhbox.addStretch(1)
+
+        # Horizontal image pair
+        folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: {}')
+        folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
 
         # Horizontal 이미지 mix & sort
         imageMixBtn = QPushButton('&이미지 순서 섞기', self)
@@ -40,7 +53,7 @@ class ArmaViewer(QWidget):
 
         # Horizontal << file name >>
         previousBtn = QPushButton('&<<<', self)
-        fileNumName = QLabel(f'번째 파일 | 현재 파일명: {folderlabel}')
+        fileNumName = QLabel(f'번째 파일 | 현재 파일명: {filename}')
         nextBtn = QPushButton('&>>>', self)
 
         prenextBox = QHBoxLayout()
@@ -59,17 +72,18 @@ class ArmaViewer(QWidget):
         hbox.addStretch(1)
 
         # image window
-        pixmap = QPixmap(folderpath)
+        pixmap = QPixmap(filepath)
         lbl_img = QLabel()
         lbl_img.setPixmap(pixmap)
 
         # Report Button
         reportBtn = QPushButton('&문제 신고하기', self)
 
-        # Total Layout
+        # Total Vertical Layout
         vbox = QVBoxLayout()
         vbox.addStretch(1)
         vbox.addLayout(fhbox)
+        vbox.addWidget(folderImagePairNumLabel)
         vbox.addLayout(imageMixSortBox)
         vbox.addLayout(prenextBox)
         vbox.addLayout(hbox)
