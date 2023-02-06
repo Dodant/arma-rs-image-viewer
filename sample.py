@@ -3,7 +3,7 @@ import sys
 import numpy
 import pandas
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, \
-    QGroupBox, QHBoxLayout, QGridLayout, QVBoxLayout
+    QGroupBox, QHBoxLayout, QGridLayout, QVBoxLayout, QFileDialog, QLabel, QPushButton
 
 
 class ArmaViewer(QWidget):
@@ -12,6 +12,25 @@ class ArmaViewer(QWidget):
         self.initUI()
 
     def initUI(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ShowDirsOnly
+        folderpath = QFileDialog.getExistingDirectory(self, 'Select Folder')
+        folderlabel = QLabel('폴더명 : ' + folderpath)
+
+        imageMixBtn = QPushButton('&이미지 순서 섞기', self)
+        imageSortBtn = QPushButton('&이미지 순서 정렬하기', self)
+
+        imageMixSortBox = QHBoxLayout()
+        imageMixSortBox.addStretch(1)
+        imageMixSortBox.addWidget(imageMixBtn)
+        imageMixSortBox.addWidget(imageSortBtn)
+        imageMixSortBox.addStretch(1)
+
+        fhbox = QHBoxLayout()
+        fhbox.addStretch(1)
+        fhbox.addWidget(folderlabel)
+        fhbox.addStretch(1)
+
         hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self.createImageGroup())
@@ -20,6 +39,8 @@ class ArmaViewer(QWidget):
 
         vbox = QVBoxLayout()
         vbox.addStretch(1)
+        vbox.addLayout(fhbox)
+        vbox.addLayout(imageMixSortBox)
         vbox.addLayout(hbox)
         vbox.addStretch(1)
 
