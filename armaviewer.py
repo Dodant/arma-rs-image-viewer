@@ -29,6 +29,11 @@ class ArmaViewer(QWidget):
         self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: {}')
         self.fileNumName = QLabel(f'번째 파일 | 현재 파일명: {self.fname}')
         self.folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
+        self.pixmap = QPixmap(self.fname)
+        self.lbl_img = QLabel()
+        self.eo_radiobtn = QRadioButton('EO', self)
+        self.ir_radiobtn = QRadioButton('IR', self)
+        self.eoir_radiobtn = QRadioButton('EO+IR', self)
         self.initUI()
 
     def fileDialogOpen(self):
@@ -40,8 +45,10 @@ class ArmaViewer(QWidget):
 
         self.folderlabel.setText(f'폴더명 : {self.foldername}')
         self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
-        print(self.fileLists)
         self.fileNumName.setText(f'{self.fileLists.index("/".join(self.fname.split("/")[:-2]))}번째 파일 | 현재 파일명: {str(self.fname.split("/")[-3:-2])}')
+        self.pixmap = QPixmap(self.fname)
+        self.lbl_img.setPixmap(self.pixmap)
+        self.eo_radiobtn.setChecked(True)
 
     def imageMix(self):
         random.shuffle(self.fileLists)
@@ -93,9 +100,9 @@ class ArmaViewer(QWidget):
         hbox.addStretch(1)
 
         # image window
-        pixmap = QPixmap(self.fname)
-        lbl_img = QLabel()
-        lbl_img.setPixmap(pixmap)
+        # pixmap = QPixmap(self.fname)
+        # lbl_img = QLabel()
+        # lbl_img.setPixmap(self.pixmap)
 
         # Report Button
         reportBtn = QPushButton('&문제 신고하기', self)
@@ -108,7 +115,7 @@ class ArmaViewer(QWidget):
         vbox.addLayout(imageMixSortBox)
         vbox.addLayout(prenextBox)
         vbox.addLayout(hbox)
-        vbox.addWidget(lbl_img)
+        vbox.addWidget(self.lbl_img)
         vbox.addWidget(reportBtn)
         vbox.addStretch(1)
 
@@ -121,14 +128,10 @@ class ArmaViewer(QWidget):
     def createImageGroup(self):
         groupbox = QGroupBox('Image Setting')
 
-        eo_radiobtn = QRadioButton('EO', self)
-        ir_radiobtn = QRadioButton('IR', self)
-        eoir_radiobtn = QRadioButton('EO+IR', self)
-
         hbox = QHBoxLayout()
-        hbox.addWidget(eo_radiobtn)
-        hbox.addWidget(ir_radiobtn)
-        hbox.addWidget(eoir_radiobtn)
+        hbox.addWidget(self.eo_radiobtn)
+        hbox.addWidget(self.ir_radiobtn)
+        hbox.addWidget(self.eoir_radiobtn)
         groupbox.setLayout(hbox)
 
         return groupbox
