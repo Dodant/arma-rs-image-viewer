@@ -45,11 +45,23 @@ class ArmaViewer(QWidget):
 
         self.initUI()
 
+    # todo : <<< Btn file change
+    # todo : >>> Btn file change
 
     def btnClicked(self, id):
         for button in self.btnGroup.buttons():
             if button is self.btnGroup.button(id):
-                pass
+                selected = button.text()  # EO, IR, EO+IR
+                if selected == "EO":
+                    # todo : get EO image
+                    pass
+                if selected == "IR":
+                    # todo : get IR image
+                    pass
+                if selected == "EO+IR":
+                    # todo : get EO+IR image
+                    pass
+
 
     def fileDialogOpen(self):
         options = QFileDialog.Options()
@@ -96,12 +108,12 @@ class ArmaViewer(QWidget):
 
 
         # Horizontal << file name >>
-        previousBtn = QPushButton('&<<<', self)
+        prevBtn = QPushButton('&<<<', self)
         nextBtn = QPushButton('&>>>', self)
 
         prenextBox = QHBoxLayout()
         prenextBox.addStretch(1)
-        prenextBox.addWidget(previousBtn)
+        prenextBox.addWidget(prevBtn)
         prenextBox.addWidget(self.fileNumName)
         prenextBox.addWidget(nextBtn)
         prenextBox.addStretch(1)
@@ -120,6 +132,7 @@ class ArmaViewer(QWidget):
         # lbl_img.setPixmap(self.pixmap)
 
         # Report Button
+        # todo : report system
         reportBtn = QPushButton('&문제 신고하기', self)
 
         # Total Vertical Layout
@@ -155,8 +168,11 @@ class ArmaViewer(QWidget):
         groupbox = QGroupBox('Label Setting')
 
         centerpoint_checkbtn = QCheckBox('Center Point', self)
+        # todo : center point plot
         bbox_checkbtn= QCheckBox('BBOX', self)
+        # todo : bbox plot
         label_checkbtn = QCheckBox('Label', self)
+        # todo : label plot
 
         hbox = QHBoxLayout()
         hbox.addWidget(centerpoint_checkbtn)
