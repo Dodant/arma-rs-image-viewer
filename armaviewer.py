@@ -7,7 +7,7 @@ import numpy
 import pandas
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, \
     QGroupBox, QHBoxLayout, QGridLayout, QVBoxLayout, QFileDialog, QLabel, QPushButton, \
-    QCheckBox
+    QCheckBox, QButtonGroup
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
@@ -29,12 +29,27 @@ class ArmaViewer(QWidget):
         self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: {}')
         self.fileNumName = QLabel(f'번째 파일 | 현재 파일명: {self.fname}')
         self.folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
+
         self.pixmap = QPixmap(self.fname)
         self.lbl_img = QLabel()
+
+        self.btnGroup = QButtonGroup()
+        self.btnGroup.setExclusive(True)
         self.eo_radiobtn = QRadioButton('EO', self)
+        self.btnGroup.addButton(self.eo_radiobtn, 1)
         self.ir_radiobtn = QRadioButton('IR', self)
+        self.btnGroup.addButton(self.ir_radiobtn, 2)
         self.eoir_radiobtn = QRadioButton('EO+IR', self)
+        self.btnGroup.addButton(self.eoir_radiobtn, 3)
+        self.btnGroup.buttonClicked[int].connect(self.btnClicked)
+
         self.initUI()
+
+
+    def btnClicked(self, id):
+        for button in self.btnGroup.buttons():
+            if button is self.btnGroup.button(id):
+                pass
 
     def fileDialogOpen(self):
         options = QFileDialog.Options()
