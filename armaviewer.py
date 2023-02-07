@@ -1,4 +1,7 @@
+import os
 import sys
+import time
+import random
 
 import numpy
 import pandas
@@ -9,40 +12,59 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
 
+def getAbsoluteFilePath(directory):
+    dirlist = []
+    for filenames in os.listdir(directory):
+        dirlist.append(os.path.abspath(os.path.join(directory, filenames)))
+    return sorted(dirlist)
+
+
 class ArmaViewer(QWidget):
     def __init__(self):
         super().__init__()
+        self.fname = 'None'
+        self.foldername = 'None'
+        self.fileLists = None
+        self.folderlabel = QLabel(f'폴더명 : {self.fname}', self)
+        self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: {}')
+        self.fileNumName = QLabel(f'번째 파일 | 현재 파일명: {self.fname}')
+        self.folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
         self.initUI()
 
-    def extractFileNames(self, folder):
+    def fileDialogOpen(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
+        self.foldername = '/'.join(self.fname.split('/')[:-3])
+        self.fileLists = getAbsoluteFilePath(self.foldername)
+
+        self.folderlabel.setText(f'폴더명 : {self.foldername}')
+        self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
+        print(self.fileLists)
+        self.fileNumName.setText(f'{self.fileLists.index("/".join(self.fname.split("/")[:-2]))}번째 파일 | 현재 파일명: {str(self.fname.split("/")[-3:-2])}')
+
+    def imageMix(self):
+        random.shuffle(self.fileLists)
+
+    def imageSorted(self):
+        self.fileLists.sort()
 
     def initUI(self):
-
         # Horizontal 폴더 열기 & 폴더명
         folderSelectBtn = QPushButton('&폴더 열기', self)
-
-        # options = QFileDialog.Options()
-        # options |= QFileDialog.ShowDirsOnly
-        filepath = QFileDialog.getExistingDirectory(self, 'Select Folder')
-        split_name = filepath.split('/')
-        folder_name = '/'.join(split_name[:-1])
-        filename = split_name[-1]
-        folderlabel = QLabel(f'폴더명 : {folder_name}')
-
+        folderSelectBtn.clicked.connect(self.fileDialogOpen)
 
         fhbox = QHBoxLayout()
         fhbox.addStretch(1)
         fhbox.addWidget(folderSelectBtn)
-        fhbox.addWidget(folderlabel)
+        fhbox.addWidget(self.folderlabel)
         fhbox.addStretch(1)
-
-        # Horizontal image pair
-        folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: {}')
-        folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
 
         # Horizontal 이미지 mix & sort
         imageMixBtn = QPushButton('&이미지 순서 섞기', self)
         imageSortBtn = QPushButton('&이미지 순서 정렬하기', self)
+        imageMixBtn.clicked.connect(self.imageMix)
+        imageSortBtn.clicked.connect(self.imageSorted)
 
         imageMixSortBox = QHBoxLayout()
         imageMixSortBox.addStretch(1)
@@ -53,13 +75,12 @@ class ArmaViewer(QWidget):
 
         # Horizontal << file name >>
         previousBtn = QPushButton('&<<<', self)
-        fileNumName = QLabel(f'번째 파일 | 현재 파일명: {filename}')
         nextBtn = QPushButton('&>>>', self)
 
         prenextBox = QHBoxLayout()
         prenextBox.addStretch(1)
         prenextBox.addWidget(previousBtn)
-        prenextBox.addWidget(fileNumName)
+        prenextBox.addWidget(self.fileNumName)
         prenextBox.addWidget(nextBtn)
         prenextBox.addStretch(1)
 
@@ -72,7 +93,7 @@ class ArmaViewer(QWidget):
         hbox.addStretch(1)
 
         # image window
-        pixmap = QPixmap(filepath)
+        pixmap = QPixmap(self.fname)
         lbl_img = QLabel()
         lbl_img.setPixmap(pixmap)
 
@@ -83,7 +104,7 @@ class ArmaViewer(QWidget):
         vbox = QVBoxLayout()
         vbox.addStretch(1)
         vbox.addLayout(fhbox)
-        vbox.addWidget(folderImagePairNumLabel)
+        vbox.addWidget(self.folderImagePairNumLabel)
         vbox.addLayout(imageMixSortBox)
         vbox.addLayout(prenextBox)
         vbox.addLayout(hbox)
