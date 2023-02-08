@@ -25,6 +25,8 @@ class ArmaViewer(QWidget):
         self.fname = 'None'
         self.foldername = 'None'
         self.fileLists = None
+        self.nowIndex = 0
+        self.imgType = ""
         self.folderlabel = QLabel(f'폴더명 : {self.fname}', self)
         self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: {}')
         self.fileNumName = QLabel(f'번째 파일 | 현재 파일명: {self.fname}')
@@ -45,23 +47,17 @@ class ArmaViewer(QWidget):
 
         self.initUI()
 
-    # todo : <<< Btn file change
-    # todo : >>> Btn file change
-
     def btnClicked(self, id):
         for button in self.btnGroup.buttons():
             if button is self.btnGroup.button(id):
                 selected = button.text()  # EO, IR, EO+IR
-                if selected == "EO":
-                    # todo : get EO image
-                    pass
-                if selected == "IR":
-                    # todo : get IR image
-                    pass
-                if selected == "EO+IR":
+                if selected in {'EO', 'IR'}:
+                    self.imgType = selected
+                    self.fname = self.fname[:-6] + f'{self.imgType}.png'
+                    self.changeImage()
+                if selected == 'EO+IR':
                     # todo : get EO+IR image
                     pass
-
 
     def fileDialogOpen(self):
         options = QFileDialog.Options()
@@ -72,16 +68,40 @@ class ArmaViewer(QWidget):
 
         self.folderlabel.setText(f'폴더명 : {self.foldername}')
         self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
-        self.fileNumName.setText(f'{self.fileLists.index("/".join(self.fname.split("/")[:-2]))}번째 파일 | 현재 파일명: {str(self.fname.split("/")[-3:-2])}')
+        self.imgType = 'EO'
+        self.changeImage()
+        self.changeImageInfo()
+        self.eo_radiobtn.setChecked(True)
+
+    def changeImageInfo(self):
+        self.nowIndex = self.fileLists.index("/".join(self.fname.split("/")[:-2]))
+        self.fileNumName.setText(f'{self.nowIndex}번째 파일 | 현재 파일명: {str(self.fname.split("/")[-3:-2])}')
+
+    def changeImage(self):
         self.pixmap = QPixmap(self.fname)
         self.lbl_img.setPixmap(self.pixmap)
-        self.eo_radiobtn.setChecked(True)
 
     def imageMix(self):
         random.shuffle(self.fileLists)
 
     def imageSorted(self):
         self.fileLists.sort()
+
+    def goToPrevImage(self):
+        self.nowIndex -= 1
+        if self.nowIndex < 0:
+            self.nowIndex = len(self.fileLists) - 1
+        self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
+        self.changeImage()
+        self.changeImageInfo()
+
+    def goToNextImage(self):
+        self.nowIndex += 1
+        if self.nowIndex >= len(self.fileLists):
+            self.nowIndex = 0
+        self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
+        self.changeImage()
+        self.changeImageInfo()
 
     def initUI(self):
         # Horizontal 폴더 열기 & 폴더명
@@ -110,6 +130,8 @@ class ArmaViewer(QWidget):
         # Horizontal << file name >>
         prevBtn = QPushButton('&<<<', self)
         nextBtn = QPushButton('&>>>', self)
+        prevBtn.clicked.connect(self.goToPrevImage)
+        nextBtn.clicked.connect(self.goToNextImage)
 
         prenextBox = QHBoxLayout()
         prenextBox.addStretch(1)
