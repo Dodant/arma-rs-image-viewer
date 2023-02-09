@@ -1,17 +1,24 @@
+#
+# armaviewer.py
+# arma-rs-image-viewer
+#
+# Created by Junggyun Oh on 02/06/2023.
+# Copyright (c) 2023 Junggyun Oh All rights reserved.
+#
+
 import os
 import sys
-import time
 import random
 
-import numpy as np
 import cv2
+import numpy as np
 import pandas as pd
+
+import qimage2ndarray
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
     QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
-import qimage2ndarray
-
 
 
 def getAbsoluteFilePath(directory):
@@ -24,14 +31,14 @@ def getAbsoluteFilePath(directory):
 class ArmaViewer(QWidget):
     def __init__(self):
         super().__init__()
-        self.fname = 'None'
-        self.oppositefname = 'None'
-        self.folderPath = 'None'
-        self.fileLists = None
-        self.nowIndex = 0
-        self.imgType = ''
-        self.selected = ''
-        self.checked = []
+        self.fname: str = 'None'
+        self.folderPath: str = 'None'
+        self.fileLists: list = None
+        self.nowIndex: int = 0
+        self.imgType: str = ''
+        self.selected: str = ''
+        self.checked: list = []
+
         self.folderlabel = QLabel(f'폴더명 : {self.fname}', self)
         self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: None')
         self.folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
@@ -40,11 +47,12 @@ class ArmaViewer(QWidget):
         self.pixmap = QPixmap(self.fname)
         self.lbl_img = QLabel()
 
-        self.btnGroup = QButtonGroup()
-        self.btnGroup.setExclusive(True)
         self.eo_radiobtn = QRadioButton('EO', self)
         self.ir_radiobtn = QRadioButton('IR', self)
         self.eoir_radiobtn = QRadioButton('EO+IR', self)
+
+        self.btnGroup = QButtonGroup()
+        self.btnGroup.setExclusive(True)
         self.btnGroup.addButton(self.eo_radiobtn, 1)
         self.btnGroup.addButton(self.ir_radiobtn, 2)
         self.btnGroup.addButton(self.eoir_radiobtn, 3)
@@ -58,14 +66,28 @@ class ArmaViewer(QWidget):
         self.label_checkbtn.toggled.connect(self.checkboxToggle)
         self.initUI()
 
+    def fileDialogOpen(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
+        self.folderPath = self.fileTextExtractor('folder_path')
+        self.fileLists = getAbsoluteFilePath(self.folderPath)
+
+        self.folderlabel.setText(f'폴더명 : {self.folderPath}')
+        self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
+        self.imgType = self.selected = self.fileTextExtractor('img_type')
+        self.checkboxToggle()
+        self.plot()
+        self.changeImageInfo()
+
+        if self.imgType == 'EO': self.eo_radiobtn.setChecked(True)
+        elif self.imgType == 'IR': self.ir_radiobtn.setChecked(True)
+
     def checkboxToggle(self):
         self.checked = []
-        if self.center_checkbtn.isChecked():
-            self.checked.append(0)
-        if self.bbox_checkbtn.isChecked():
-            self.checked.append(1)
-        if self.label_checkbtn.isChecked():
-            self.checked.append(2)
+        if self.center_checkbtn.isChecked(): self.checked.append(0)
+        if self.bbox_checkbtn.isChecked(): self.checked.append(1)
+        if self.label_checkbtn.isChecked(): self.checked.append(2)
         self.plot()
 
     def plot(self):
@@ -80,43 +102,29 @@ class ArmaViewer(QWidget):
             self.lbl_img.setPixmap(self.pixmap)
             return
         if self.selected == 'EO':
-            canvas = cv2.imread(self.fileTextExtractor('eo_full_path'))
-            canvas = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
+            canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('eo_full_path')), cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
         if self.selected == 'IR':
-            canvas = cv2.imread(self.fileTextExtractor('ir_full_path'))
-            canvas = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
+            canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('eo_full_path')), cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
 
-    def eoirFile(self):
-        # eo_canvas = cv2.imread(self.fileTextExtractor('eo_full_path'))
-        # ir_canvas = cv2.imread(self.fileTextExtractor('ir_full_path'))
-        # blendedCanvas = cv2.addWeighted(eo_canvas, 0.7, ir_canvas, 0.5, 0)
-        # self.pixmap = QPixmap(qimage2ndarray.array2qimage(blendedCanvas, normalize=False))
-        # self.lbl_img.setPixmap(self.pixmap)
-        self.checkboxToggle()
-        self.plot()
-
     def plotCanvas(self, canvas):
-        if 0 in self.checked:
-            canvas = self.plotCenteredPtsImage(canvas)
-        if 1 in self.checked:
-            canvas = self.plotBboxImage(canvas)
-        if 2 in self.checked:
-            canvas = self.plotLabelImage(canvas)
+        if 0 in self.checked: canvas = self.plotCenteredPtsImage(canvas)
+        if 1 in self.checked: canvas = self.plotBboxImage(canvas)
+        if 2 in self.checked: canvas = self.plotLabelImage(canvas)
         return canvas
 
     def plotCenteredPtsImage(self, canvas):
         anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
         for _, row in anno_file.iterrows():
-            center_x, center_y = int(row['center_x']), int(row['center_y'])
-            cv2.circle(canvas, (center_x, center_y), 1, (0, 0, 255), 2)
+            center = list(map(int, row['center_x':'center_y']))
+            cv2.circle(canvas, center, 1, (0,0,255), 2)
         return canvas
 
     def plotBboxImage(self, canvas):
@@ -124,73 +132,40 @@ class ArmaViewer(QWidget):
         for _, row in anno_file.iterrows():
             pts = list(map(list, [row['x1':'y1'], row['x2':'y2'], row['x3':'y3'], row['x4':'y4']]))
             polygon = np.array([pts], dtype=np.int32)
-            cv2.polylines(canvas, [polygon], True, (0, 0, 255), 1)
+            cv2.polylines(canvas, [polygon], True, (0,0,255), 1)
         return canvas
 
     def plotLabelImage(self, canvas):
         anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
         for _, row in anno_file.iterrows():
-            center_x, center_y = int(row['center_x']), int(row['center_y'])
-            cv2.putText(canvas, row['sub_class'], (center_x + 5, center_y + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
+            center = list(map(int, row['center_x':'center_y']))
+            cv2.putText(canvas, row['sub_class'], (center[0]+5, center[1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)
         return canvas
 
     def fileTextExtractor(self, case):
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
-        if case == 'pick_full_path':
-            return self.fname
+        if case == 'pick_full_path': return self.fname
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
-        if case == 'eo_full_path':
-            return self.fname[:-6] + 'EO.png'
+        if case == 'eo_full_path': return f'{self.fname[:-6]}EO.png'
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/IR.png
-        if case == 'ir_full_path':
-            return self.fname[:-6] + 'IR.png'
+        if case == 'ir_full_path': return f'{self.fname[:-6]}IR.png'
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/annotation.csv
-        if case == 'annotation_path':
-            return '/'.join(self.fname.split('/')[:-2]) + '/annotations.csv'
+        if case == 'annotation_path': return f'{"/".join(self.fname.split("/")[:-2])}/annotations.csv'
         # malden-sunny-10-08
-        if case == 'folder_name':
-            return '/'.join(self.fname.split('/')[-4:-3])
+        if case == 'folder_name': return '/'.join(self.fname.split('/')[-4:-3])
         # /home/dodant/Downloads/malden-sunny-10-08
-        if case == 'folder_path':
-            return '/'.join(self.fname.split('/')[:-3])
+        if case == 'folder_path': return '/'.join(self.fname.split('/')[:-3])
         # 00000.classes_W.csv.result
-        if case == 'image_name':
-            return self.fname.split('/')[-3:-2][0]
+        if case == 'image_name': return self.fname.split('/')[-3:-2][0]
         # EO
-        if case == 'img_type':
-            return self.fname[-6:-4]
+        if case == 'img_type': return self.fname[-6:-4]
         if case == 'opposite_type':
-            if self.fname[-6:-4] == 'EO':
-                return 'IR'
-            if self.fname[-6:-4] == 'IR':
-                return 'EO'
+            if self.fname[-6:-4] == 'EO': return 'IR'
+            if self.fname[-6:-4] == 'IR': return 'EO'
         if case == 'opposite_type_path':
-            if self.fname[-6:-4] == 'EO':
-                return self.fname[:-6] + 'IR.png'
-            if self.fname[-6:-4] == 'IR':
-                return self.fname[:-6] + 'EO.png'
-        if case == 'now_index':
-            return self.fileLists.index("/".join(self.fname.split("/")[:-2]))
-
-    def fileDialogOpen(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
-        self.folderPath = self.fileTextExtractor('folder_path')
-        self.fileLists = getAbsoluteFilePath(self.folderPath)
-
-        self.folderlabel.setText(f'폴더명 : {self.folderPath}')
-        self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
-        self.imgType = self.fname[-6:-4]
-        # self.changeImage()
-        self.checkboxToggle()
-        self.plot()
-        self.changeImageInfo()
-
-        if self.imgType == "EO":
-            self.eo_radiobtn.setChecked(True)
-        elif self.imgType == "IR":
-            self.ir_radiobtn.setChecked(True)
+            if self.fname[-6:-4] == 'EO': return f'{self.fname[:-6]}IR.png'
+            if self.fname[-6:-4] == 'IR': return f'{self.fname[:-6]}EO.png'
+        if case == 'now_index': return self.fileLists.index("/".join(self.fname.split("/")[:-2]))
 
     def btnClicked(self, id):
         for button in self.btnGroup.buttons():
@@ -202,17 +177,12 @@ class ArmaViewer(QWidget):
                     self.checkboxToggle()
                     self.plot()
                 if self.selected == 'EO+IR':
-                    # self.eoirFile()
                     self.checkboxToggle()
                     self.plot()
 
     def changeImageInfo(self):
         self.nowIndex = self.fileTextExtractor('now_index')
         self.fileNumName.setText(f'{self.nowIndex}번째 파일 | 현재 파일명: {self.fileTextExtractor("image_name")}')
-
-    def changeImage(self):
-        self.pixmap = QPixmap(self.fname)
-        self.lbl_img.setPixmap(self.pixmap)
 
     def imageMix(self):
         random.shuffle(self.fileLists)
@@ -222,20 +192,16 @@ class ArmaViewer(QWidget):
 
     def goToPrevImage(self):
         self.nowIndex -= 1
-        if self.nowIndex < 0:
-            self.nowIndex = len(self.fileLists) - 1
+        if self.nowIndex < 0: self.nowIndex = len(self.fileLists) - 1
         self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
-        # self.changeImage()
         self.checkboxToggle()
         self.plot()
         self.changeImageInfo()
 
     def goToNextImage(self):
         self.nowIndex += 1
-        if self.nowIndex >= len(self.fileLists):
-            self.nowIndex = 0
+        if self.nowIndex >= len(self.fileLists): self.nowIndex = 0
         self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
-        # self.changeImage()
         self.checkboxToggle()
         self.plot()
         self.changeImageInfo()
@@ -338,13 +304,13 @@ class ArmaViewer(QWidget):
             self.goToNextImage()
         elif e.key() == Qt.Key_W:
             self.imgType = 'EO'
-            self.fname = self.fname[:-6] + f'{self.imgType}.png'
+            self.fname = self.fileTextExtractor('eo_full_path')
             self.checkboxToggle()
             self.plot()
             self.eo_radiobtn.setChecked(True)
         elif e.key() == Qt.Key_S:
             self.imgType = 'IR'
-            self.fname = self.fname[:-6] + f'{self.imgType}.png'
+            self.fname = self.fileTextExtractor('ir_full_path')
             self.checkboxToggle()
             self.plot()
             self.ir_radiobtn.setChecked(True)
