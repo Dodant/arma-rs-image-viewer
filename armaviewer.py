@@ -4,7 +4,8 @@ import time
 import random
 
 import numpy
-import pandas
+import cv2
+import pandas as pd
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, \
     QGroupBox, QHBoxLayout, QGridLayout, QVBoxLayout, QFileDialog, QLabel, QPushButton, \
     QCheckBox, QButtonGroup
@@ -23,6 +24,7 @@ class ArmaViewer(QWidget):
     def __init__(self):
         super().__init__()
         self.fname = 'None'
+        self.oppositefname = 'None'
         self.foldername = 'None'
         self.fileLists = None
         self.nowIndex = 0
@@ -30,7 +32,7 @@ class ArmaViewer(QWidget):
         self.folderlabel = QLabel(f'폴더명 : {self.fname}', self)
         self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: None')
         self.folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
-        self.fileNumName = QLabel(f'번째 파일 | 현재 파일명: {self.fname}')
+        self.fileNumName = QLabel(f'n번째 파일 | 현재 파일명: {self.fname}')
 
         self.pixmap = QPixmap(self.fname)
         self.lbl_img = QLabel()
@@ -47,6 +49,56 @@ class ArmaViewer(QWidget):
 
         self.initUI()
 
+    # todo : make EO+IR image using temp.png
+    def eoirFile(self):
+        eo_canvas = cv2.imread(self.fname[:-6] + 'EO.png')
+        ir_canvas = cv2.imread(self.fname[:-6] + 'IR.png')
+        print(self.fname[:-6] + 'EO.png')
+        print(self.fname[:-6] + 'IR.png')
+        anno_filepath = '/home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/annotations.csv'
+        anno_file = pd.read_csv(anno_filepath)
+
+        self.fname[:-6] + 'IR.png'
+        eo_filepath = '/home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png'
+        ir_filepath = '/home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/IR.png'
+
+    # todo : make centered point image fn
+    # todo : make bbox image fn
+    # todo : make label image fn
+
+    def fileTextExtractor(self, case):
+        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
+        if case == 'pick_full_path':
+            return self.fname
+        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
+        if case == 'eo_full_path':
+            return self.fname[:-6] + 'EO.png'
+        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/IR.png
+        if case == 'ir_full_path':
+            return self.fname[:-6] + 'IR.png'
+        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/annotation.csv
+        if case == 'annotation_path':
+            return '/'.join(self.fname.split('/')[:-2]) + '/annotation.csv'
+        # malden-sunny-10-08
+        if case == 'folder_name':
+            return '/'.join(self.fname.split('/')[-4:-3])
+        # /home/dodant/Downloads/malden-sunny-10-08
+        if case == 'folder_path':
+            return '/'.join(self.fname.split('/')[:-3])
+        # 00000.classes_W.csv.result
+        if case == 'image_name':
+            return '/'.join(self.fname.split('/')[-3:-2])
+        # EO
+        if case == 'img_type':
+            return self.fname[-6:-4]
+        if case == 'opposite_type_path':
+            if self.fname[-6:-4] == 'EO':
+                return 'IR'
+            if self.fname[-6:-4] == 'IR':
+                return 'EO'
+
+
+
     def fileDialogOpen(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -60,11 +112,15 @@ class ArmaViewer(QWidget):
         self.changeImage()
         self.changeImageInfo()
 
+        print(self.fname[:-6] + 'EO.png')
+        print(self.fname[:-6] + 'IR.png')
+
         if self.imgType == "EO":
             self.eo_radiobtn.setChecked(True)
         elif self.imgType == "IR":
             self.ir_radiobtn.setChecked(True)
 
+    # todo : edit this btnClicked fn
     def btnClicked(self, id):
         for button in self.btnGroup.buttons():
             if button is self.btnGroup.button(id):
@@ -74,7 +130,6 @@ class ArmaViewer(QWidget):
                     self.fname = self.fname[:-6] + f'{self.imgType}.png'
                     self.changeImage()
                 if selected == 'EO+IR':
-                    # todo : get EO+IR image
                     pass
 
     def changeImageInfo(self):

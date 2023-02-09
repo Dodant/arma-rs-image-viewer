@@ -12,13 +12,9 @@ eo_canvas = cv2.imread(eo_filepath)
 ir_canvas = cv2.imread(ir_filepath)
 
 anno_file = pd.read_csv(anno_filepath)
-final_canvas
-cv2.startWindowThread()
 
 
 
-
-#
 # for _, row in anno_file.iterrows():
 #     ## centered point
 #     center_x, center_y = int(row['center_x']), int(row['center_y'])
