@@ -6,9 +6,8 @@ import random
 import numpy as np
 import cv2
 import pandas as pd
-from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, \
-    QGroupBox, QHBoxLayout, QGridLayout, QVBoxLayout, QFileDialog, QLabel, QPushButton, \
-    QCheckBox, QButtonGroup
+from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
+    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import qimage2ndarray
@@ -63,31 +62,46 @@ class ArmaViewer(QWidget):
         self.checked = []
         if self.center_checkbtn.isChecked():
             self.checked.append(0)
-        if self.center_checkbtn.isChecked():
+        if self.bbox_checkbtn.isChecked():
             self.checked.append(1)
-        if self.center_checkbtn.isChecked():
+        if self.label_checkbtn.isChecked():
             self.checked.append(2)
+        self.plot()
 
+    def plot(self):
         if self.selected == 'EO+IR':
             eo_canvas = cv2.imread(self.fileTextExtractor('eo_full_path'))
             ir_canvas = cv2.imread(self.fileTextExtractor('ir_full_path'))
+            eo_canvas = cv2.cvtColor(eo_canvas, cv2.COLOR_BGR2RGB)
+            ir_canvas = cv2.cvtColor(ir_canvas, cv2.COLOR_BGR2RGB)
             canvas = cv2.addWeighted(eo_canvas, 0.7, ir_canvas, 0.5, 0)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
-        if self.imgType == 'EO':
+        if self.selected == 'EO':
             canvas = cv2.imread(self.fileTextExtractor('eo_full_path'))
+            canvas = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
-        if self.imgType == 'IR':
+        if self.selected == 'IR':
             canvas = cv2.imread(self.fileTextExtractor('ir_full_path'))
+            canvas = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
+
+    def eoirFile(self):
+        # eo_canvas = cv2.imread(self.fileTextExtractor('eo_full_path'))
+        # ir_canvas = cv2.imread(self.fileTextExtractor('ir_full_path'))
+        # blendedCanvas = cv2.addWeighted(eo_canvas, 0.7, ir_canvas, 0.5, 0)
+        # self.pixmap = QPixmap(qimage2ndarray.array2qimage(blendedCanvas, normalize=False))
+        # self.lbl_img.setPixmap(self.pixmap)
+        self.checkboxToggle()
+        self.plot()
 
     def plotCanvas(self, canvas):
         if 0 in self.checked:
@@ -95,15 +109,8 @@ class ArmaViewer(QWidget):
         if 1 in self.checked:
             canvas = self.plotBboxImage(canvas)
         if 2 in self.checked:
-            canvas = self.plotBboxImage(canvas)
+            canvas = self.plotLabelImage(canvas)
         return canvas
-
-    def eoirFile(self):
-        eo_canvas = cv2.imread(self.fileTextExtractor('eo_full_path'))
-        ir_canvas = cv2.imread(self.fileTextExtractor('ir_full_path'))
-        blendedCanvas = cv2.addWeighted(eo_canvas, 0.7, ir_canvas, 0.5, 0)
-        self.pixmap = QPixmap(qimage2ndarray.array2qimage(blendedCanvas, normalize=False))
-        self.lbl_img.setPixmap(self.pixmap)
 
     def plotCenteredPtsImage(self, canvas):
         anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
@@ -175,7 +182,9 @@ class ArmaViewer(QWidget):
         self.folderlabel.setText(f'폴더명 : {self.folderPath}')
         self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
         self.imgType = self.fname[-6:-4]
-        self.changeImage()
+        # self.changeImage()
+        self.checkboxToggle()
+        self.plot()
         self.changeImageInfo()
 
         if self.imgType == "EO":
@@ -190,9 +199,12 @@ class ArmaViewer(QWidget):
                 if self.selected in {'EO', 'IR'}:
                     self.imgType = self.selected
                     self.fname = self.fname[:-6] + f'{self.imgType}.png'
-                    self.changeImage()
+                    self.checkboxToggle()
+                    self.plot()
                 if self.selected == 'EO+IR':
-                    self.eoirFile()
+                    # self.eoirFile()
+                    self.checkboxToggle()
+                    self.plot()
 
     def changeImageInfo(self):
         self.nowIndex = self.fileTextExtractor('now_index')
@@ -213,7 +225,9 @@ class ArmaViewer(QWidget):
         if self.nowIndex < 0:
             self.nowIndex = len(self.fileLists) - 1
         self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
-        self.changeImage()
+        # self.changeImage()
+        self.checkboxToggle()
+        self.plot()
         self.changeImageInfo()
 
     def goToNextImage(self):
@@ -221,7 +235,9 @@ class ArmaViewer(QWidget):
         if self.nowIndex >= len(self.fileLists):
             self.nowIndex = 0
         self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
-        self.changeImage()
+        # self.changeImage()
+        self.checkboxToggle()
+        self.plot()
         self.changeImageInfo()
 
     def initUI(self):
@@ -323,12 +339,14 @@ class ArmaViewer(QWidget):
         elif e.key() == Qt.Key_W:
             self.imgType = 'EO'
             self.fname = self.fname[:-6] + f'{self.imgType}.png'
-            self.changeImage()
+            self.checkboxToggle()
+            self.plot()
             self.eo_radiobtn.setChecked(True)
         elif e.key() == Qt.Key_S:
             self.imgType = 'IR'
             self.fname = self.fname[:-6] + f'{self.imgType}.png'
-            self.changeImage()
+            self.checkboxToggle()
+            self.plot()
             self.ir_radiobtn.setChecked(True)
 
 
