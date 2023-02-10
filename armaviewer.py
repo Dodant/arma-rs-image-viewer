@@ -9,16 +9,17 @@
 import os
 import sys
 import random
+import re
 
 import cv2
 import numpy as np
 import pandas as pd
 
-import qimage2ndarray
+import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
-    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup
+    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox
 
 
 def getAbsoluteFilePath(directory):
@@ -33,7 +34,7 @@ class ArmaViewer(QWidget):
         super().__init__()
         self.fname: str = 'None'
         self.folderPath: str = 'None'
-        self.fileLists: list = None
+        self.fileLists: list = []
         self.nowIndex: int = 0
         self.imgType: str = ''
         self.selected: str = ''
@@ -59,7 +60,7 @@ class ArmaViewer(QWidget):
         self.btnGroup.buttonClicked[int].connect(self.btnClicked)
 
         self.center_checkbtn = QCheckBox('Center Point', self)
-        self.bbox_checkbtn= QCheckBox('BBOX', self)
+        self.bbox_checkbtn = QCheckBox('BBOX', self)
         self.label_checkbtn = QCheckBox('Label', self)
         self.center_checkbtn.toggled.connect(self.checkboxToggle)
         self.bbox_checkbtn.toggled.connect(self.checkboxToggle)
@@ -71,6 +72,19 @@ class ArmaViewer(QWidget):
         options |= QFileDialog.DontUseNativeDialog
         self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
         self.folderPath = self.fileTextExtractor('folder_path')
+        p = re.compile('[a-z]+-[a-z]+-[0-1][0-9]-[0-3][0-9]')
+        if p.match(self.fileTextExtractor('folder_name')) is None:
+            QMessageBox.critical(self, 'Wrong Directory',
+                                 "You pick the wrong directory.\n"
+                                 "Select Dir [MAP]-[WEATHER]-[MONTH]-[DATE]\n"
+                                 "EX) \'malden-sunny-10-08\'")
+            return
+        p = re.compile('[0-9]{5}.classes_[A_Z].csv.result')
+        if p.match(self.fileTextExtractor('image_name')) is None:
+            QMessageBox.critical(self, 'Wrong Image',
+                                 "You pick the wrong image directory.\n"
+                                 "EX) \'00000.classes_W.csv.result\'")
+            return
         self.fileLists = getAbsoluteFilePath(self.folderPath)
 
         self.folderlabel.setText(f'폴더명 : {self.folderPath}')
@@ -98,19 +112,19 @@ class ArmaViewer(QWidget):
             ir_canvas = cv2.cvtColor(ir_canvas, cv2.COLOR_BGR2RGB)
             canvas = cv2.addWeighted(eo_canvas, 0.7, ir_canvas, 0.5, 0)
             canvas = self.plotCanvas(canvas)
-            self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
+            self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
         if self.selected == 'EO':
             canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('eo_full_path')), cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
-            self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
+            self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
         if self.selected == 'IR':
             canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('eo_full_path')), cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
-            self.pixmap = QPixmap(qimage2ndarray.array2qimage(canvas, normalize=False))
+            self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
             return
 
@@ -142,7 +156,7 @@ class ArmaViewer(QWidget):
             cv2.putText(canvas, row['sub_class'], (center[0]+5, center[1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)
         return canvas
 
-    def fileTextExtractor(self, case):
+    def fileTextExtractor(self, case:str):
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
         if case == 'pick_full_path': return self.fname
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
@@ -167,9 +181,9 @@ class ArmaViewer(QWidget):
             if self.fname[-6:-4] == 'IR': return f'{self.fname[:-6]}EO.png'
         if case == 'now_index': return self.fileLists.index("/".join(self.fname.split("/")[:-2]))
 
-    def btnClicked(self, id):
+    def btnClicked(self, sign):
         for button in self.btnGroup.buttons():
-            if button is self.btnGroup.button(id):
+            if button is self.btnGroup.button(sign):
                 self.selected = button.text()  # EO, IR, EO+IR
                 if self.selected in {'EO', 'IR'}:
                     self.imgType = self.selected
@@ -193,7 +207,7 @@ class ArmaViewer(QWidget):
     def goToPrevImage(self):
         self.nowIndex -= 1
         if self.nowIndex < 0: self.nowIndex = len(self.fileLists) - 1
-        self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
+        self.fname = f'{self.fileLists[self.nowIndex]}/IMG/{self.imgType}.png'
         self.checkboxToggle()
         self.plot()
         self.changeImageInfo()
@@ -201,7 +215,7 @@ class ArmaViewer(QWidget):
     def goToNextImage(self):
         self.nowIndex += 1
         if self.nowIndex >= len(self.fileLists): self.nowIndex = 0
-        self.fname = self.fileLists[self.nowIndex] + f'/IMG/{self.imgType}.png'
+        self.fname = f'{self.fileLists[self.nowIndex]}/IMG/{self.imgType}.png'
         self.checkboxToggle()
         self.plot()
         self.changeImageInfo()
@@ -262,7 +276,7 @@ class ArmaViewer(QWidget):
         vbox.addLayout(prenextBox)
         vbox.addLayout(hbox)
         vbox.addWidget(self.lbl_img)
-        vbox.addWidget(reportBtn)
+        vbox.addWidget(reportBtn, alignment=Qt.AlignHCenter)
         vbox.addStretch(1)
 
         self.setLayout(vbox)
