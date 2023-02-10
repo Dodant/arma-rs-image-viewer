@@ -1,6 +1,4 @@
 import cv2
-import matplotlib.pyplot as plt
-from PIL import Image
 import numpy as np
 import pandas as pd
 
@@ -10,10 +8,7 @@ anno_filepath = '/home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.r
 
 eo_canvas = cv2.imread(eo_filepath)
 ir_canvas = cv2.imread(ir_filepath)
-
 anno_file = pd.read_csv(anno_filepath)
-
-
 
 for _, row in anno_file.iterrows():
     ## centered point
@@ -28,7 +23,7 @@ for _, row in anno_file.iterrows():
     cv2.putText(eo_canvas, row['sub_class'], (center_x+5, center_y+5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 1)
 
 
-# cv2.imshow('canvas', eo_canvas)
+cv2.imshow('canvas', eo_canvas)
 
 ## blend image
 dst = cv2.addWeighted(eo_canvas, 0.6, ir_canvas, 0.5, 0)
