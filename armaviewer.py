@@ -19,7 +19,7 @@ import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
-    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox
+    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, qApp, QAction, QMainWindow
 
 
 def getAbsoluteFilePath(directory):
