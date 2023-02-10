@@ -79,8 +79,8 @@ class ArmaViewer(QWidget):
                                  "Select Dir [MAP]-[WEATHER]-[MONTH]-[DATE]\n"
                                  "EX) \'malden-sunny-10-08\'")
             return
-        p = re.compile('[0-9]{5}.classes_[A_Z].csv.result')
-        if p.match(self.fileTextExtractor('image_name')) is None:
+        t = re.compile('[0-9]{5}.classes_[A-Z].csv.result')
+        if t.match(self.fileTextExtractor('image_name')) is None:
             QMessageBox.critical(self, 'Wrong Image',
                                  "You pick the wrong image directory.\n"
                                  "EX) \'00000.classes_W.csv.result\'")
@@ -89,7 +89,8 @@ class ArmaViewer(QWidget):
 
         self.folderlabel.setText(f'폴더명 : {self.folderPath}')
         self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
-        self.imgType = self.selected = self.fileTextExtractor('img_type')
+        self.imgType = self.fileTextExtractor('img_type')
+        self.selected = self.imgType
         self.checkboxToggle()
         self.plot()
         self.changeImageInfo()
@@ -110,7 +111,7 @@ class ArmaViewer(QWidget):
             ir_canvas = cv2.imread(self.fileTextExtractor('ir_full_path'))
             eo_canvas = cv2.cvtColor(eo_canvas, cv2.COLOR_BGR2RGB)
             ir_canvas = cv2.cvtColor(ir_canvas, cv2.COLOR_BGR2RGB)
-            canvas = cv2.addWeighted(eo_canvas, 0.7, ir_canvas, 0.5, 0)
+            canvas = cv2.addWeighted(eo_canvas, 0.5, ir_canvas, 0.5, 0)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
@@ -122,7 +123,7 @@ class ArmaViewer(QWidget):
             self.lbl_img.setPixmap(self.pixmap)
             return
         if self.selected == 'IR':
-            canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('eo_full_path')), cv2.COLOR_BGR2RGB)
+            canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('ir_full_path')), cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
@@ -153,7 +154,8 @@ class ArmaViewer(QWidget):
         anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
         for _, row in anno_file.iterrows():
             center = list(map(int, row['center_x':'center_y']))
-            cv2.putText(canvas, row['sub_class'], (center[0]+5, center[1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)
+            cv2.putText(canvas, f'{row["main_class"]}-{row["middle_class"]}', (center[0]+5, center[1]+5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)
         return canvas
 
     def fileTextExtractor(self, case:str):
@@ -185,7 +187,7 @@ class ArmaViewer(QWidget):
         for button in self.btnGroup.buttons():
             if button is self.btnGroup.button(sign):
                 self.selected = button.text()  # EO, IR, EO+IR
-                if self.selected in {'EO', 'IR'}:
+                if self.selected in ['EO','IR']:
                     self.imgType = self.selected
                     self.fname = self.fname[:-6] + f'{self.imgType}.png'
                     self.checkboxToggle()
@@ -292,7 +294,6 @@ class ArmaViewer(QWidget):
         hbox.addWidget(self.eoir_radiobtn)
         groupbox = QGroupBox('Image Setting')
         groupbox.setLayout(hbox)
-
         return groupbox
 
     def createLabelGroup(self):
@@ -302,7 +303,6 @@ class ArmaViewer(QWidget):
         hbox.addWidget(self.label_checkbtn)
         groupbox = QGroupBox('Label Setting')
         groupbox.setLayout(hbox)
-
         return groupbox
 
     def center(self):
@@ -312,18 +312,16 @@ class ArmaViewer(QWidget):
         self.move(qr.topLeft())
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_A:
-            self.goToPrevImage()
-        elif e.key() == Qt.Key_D:
-            self.goToNextImage()
+        if e.key() == Qt.Key_A: self.goToPrevImage()
+        elif e.key() == Qt.Key_D: self.goToNextImage()
         elif e.key() == Qt.Key_W:
-            self.imgType = 'EO'
+            self.selected = 'EO'
             self.fname = self.fileTextExtractor('eo_full_path')
             self.checkboxToggle()
             self.plot()
             self.eo_radiobtn.setChecked(True)
         elif e.key() == Qt.Key_S:
-            self.imgType = 'IR'
+            self.selected = 'IR'
             self.fname = self.fileTextExtractor('ir_full_path')
             self.checkboxToggle()
             self.plot()
