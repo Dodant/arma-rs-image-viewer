@@ -7,6 +7,7 @@
 #
 
 import os
+import os.path as pth
 import sys
 import random
 import re
@@ -170,26 +171,26 @@ class ArmaViewer(QWidget):
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
         if case == 'pick_full_path': return self.fname
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
-        if case == 'eo_full_path': return f'{self.fname[:-6]}EO.png'
+        if case == 'eo_full_path': return pth.join(pth.dirname(self.fname), 'EO.png')
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/IR.png
-        if case == 'ir_full_path': return f'{self.fname[:-6]}IR.png'
+        if case == 'ir_full_path': return pth.join(pth.dirname(self.fname), 'IR.png')
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/annotation.csv
-        if case == 'annotation_path': return f'{"/".join(self.fname.split("/")[:-2])}/annotations.csv'
+        if case == 'annotation_path': return f'{pth.sep.join(self.fname.split(pth.sep)[:-2])}{pth.sep}annotations.csv'
         # malden-sunny-10-08
-        if case == 'folder_name': return '/'.join(self.fname.split('/')[-4:-3])
+        if case == 'folder_name': return pth.sep.join(self.fname.split(pth.sep)[-4:-3])
         # /home/dodant/Downloads/malden-sunny-10-08
-        if case == 'folder_path': return '/'.join(self.fname.split('/')[:-3])
+        if case == 'folder_path': return pth.sep.join(self.fname.split(pth.sep)[:-3])
         # 00000.classes_W.csv.result
-        if case == 'image_name': return self.fname.split('/')[-3:-2][0]
+        if case == 'image_name': return self.fname.split(pth.sep)[-3:-2][0]
         # EO
         if case == 'img_type': return self.fname[-6:-4]
         if case == 'opposite_type':
             if self.fname[-6:-4] == 'EO': return 'IR'
             if self.fname[-6:-4] == 'IR': return 'EO'
         if case == 'opposite_type_path':
-            if self.fname[-6:-4] == 'EO': return f'{self.fname[:-6]}IR.png'
-            if self.fname[-6:-4] == 'IR': return f'{self.fname[:-6]}EO.png'
-        if case == 'now_index': return self.fileLists.index("/".join(self.fname.split("/")[:-2]))
+            if self.fname[-6:-4] == 'EO': return pth.join(pth.dirname(self.fname), 'IR.png')
+            if self.fname[-6:-4] == 'IR': return pth.join(pth.dirname(self.fname), 'EO.png')
+        if case == 'now_index': return self.fileLists.index(pth.sep.join(self.fname.split(pth.sep)[:-2]))
 
     def btnClicked(self, sign):
         for button in self.btnGroup.buttons():
@@ -197,7 +198,7 @@ class ArmaViewer(QWidget):
                 self.selected = button.text()  # EO, IR, EO+IR
                 if self.selected in ['EO','IR']:
                     self.imgType = self.selected
-                    self.fname = self.fname[:-6] + f'{self.imgType}.png'
+                    self.fname = pth.join(pth.dirname(self.fname), f'{self.imgType}.png')
                     self.checkboxToggle()
                     self.plot()
                 if self.selected == 'EO+IR':
@@ -217,7 +218,7 @@ class ArmaViewer(QWidget):
     def goToPrevImage(self):
         self.nowIndex -= 1
         if self.nowIndex < 0: self.nowIndex = len(self.fileLists) - 1
-        self.fname = f'{self.fileLists[self.nowIndex]}/IMG/{self.imgType}.png'
+        self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
         self.checkboxToggle()
         self.plot()
         self.changeImageInfo()
@@ -225,7 +226,7 @@ class ArmaViewer(QWidget):
     def goToNextImage(self):
         self.nowIndex += 1
         if self.nowIndex >= len(self.fileLists): self.nowIndex = 0
-        self.fname = f'{self.fileLists[self.nowIndex]}/IMG/{self.imgType}.png'
+        self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
         self.checkboxToggle()
         self.plot()
         self.changeImageInfo()
@@ -275,7 +276,6 @@ class ArmaViewer(QWidget):
         hbox.addStretch(1)
 
         # Report Button
-        # todo : report system
         reportBtn = QPushButton('문제 신고하기', self)
         reportBtn.clicked.connect(self.reportDialog)
 
@@ -299,7 +299,7 @@ class ArmaViewer(QWidget):
     def reportDialog(self):
         text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
         if ok:
-            f = open(f'{self.fileTextExtractor("folder_path")}/report.csv', 'a')
+            f = open(pth.join(self.fileTextExtractor("folder_path"),'report.csv'), 'a')
             f.write(f'{self.fileTextExtractor("pick_full_path")},{text}\n')
             f.close()
 
