@@ -19,7 +19,7 @@ import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
-    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, qApp, QAction, QMainWindow
+    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, QInputDialog
 
 
 def getAbsoluteFilePath(directory):
@@ -277,6 +277,7 @@ class ArmaViewer(QWidget):
         # Report Button
         # todo : report system
         reportBtn = QPushButton('문제 신고하기', self)
+        reportBtn.clicked.connect(self.reportDialog)
 
         # Total Vertical Layout
         vbox = QVBoxLayout()
@@ -294,6 +295,13 @@ class ArmaViewer(QWidget):
         self.resize(1000, 800)
         self.center()
         self.show()
+
+    def reportDialog(self):
+        text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
+        if ok:
+            f = open(f'{self.fileTextExtractor("folder_path")}/report.csv', 'a')
+            f.write(f'{self.fileTextExtractor("pick_full_path")},{text}\n')
+            f.close()
 
     def createImageGroup(self):
         hbox = QHBoxLayout()
