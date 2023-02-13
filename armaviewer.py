@@ -74,7 +74,7 @@ class ArmaViewer(QWidget):
         options |= QFileDialog.DontUseNativeDialog
         self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
         self.folderPath = self.fileTextExtractor('folder_path')
-        p = re.compile('[a-z]+-[a-z]+-[0-1][0-9]-[0-3][0-9]')
+        p = re.compile('[a-z]+-[a-z]+-[0-9]+-[0-9]+')
         if p.match(self.fileTextExtractor('folder_name')) is None:
             QMessageBox.critical(self, 'Wrong Directory',
                                  "You pick the wrong directory.\n"
