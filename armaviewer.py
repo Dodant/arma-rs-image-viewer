@@ -39,6 +39,8 @@ class ArmaViewer(QWidget):
         self.imgType: str = ''
         self.selected: str = ''
         self.checked: list = []
+        self.anno_file = None
+        self.label_color = {}
 
         self.folderlabel = QLabel(f'폴더명 : {self.fname}', self)
         self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: None')
@@ -130,32 +132,38 @@ class ArmaViewer(QWidget):
             return
 
     def plotCanvas(self, canvas):
+        self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
+
+        for _, row in self.anno_file.iterrows():
+            self.label_color[f'{row["main_class"]}-{row["middle_class"]}'] = \
+                (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+
         if 0 in self.checked: canvas = self.plotCenteredPtsImage(canvas)
         if 1 in self.checked: canvas = self.plotBboxImage(canvas)
         if 2 in self.checked: canvas = self.plotLabelImage(canvas)
         return canvas
 
     def plotCenteredPtsImage(self, canvas):
-        anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
-        for _, row in anno_file.iterrows():
+        self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
+        for _, row in self.anno_file.iterrows():
             center = list(map(int, row['center_x':'center_y']))
-            cv2.circle(canvas, center, 1, (0,0,255), 2)
+            cv2.circle(canvas, center, 1, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
         return canvas
 
     def plotBboxImage(self, canvas):
-        anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
-        for _, row in anno_file.iterrows():
+        self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
+        for _, row in self.anno_file.iterrows():
             pts = list(map(list, [row['x1':'y1'], row['x2':'y2'], row['x3':'y3'], row['x4':'y4']]))
             polygon = np.array([pts], dtype=np.int32)
-            cv2.polylines(canvas, [polygon], True, (0,0,255), 1)
+            cv2.polylines(canvas, [polygon], True, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 1)
         return canvas
 
     def plotLabelImage(self, canvas):
-        anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
-        for _, row in anno_file.iterrows():
+        self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
+        for _, row in self.anno_file.iterrows():
             center = list(map(int, row['center_x':'center_y']))
             cv2.putText(canvas, f'{row["main_class"]}-{row["middle_class"]}', (center[0]+5, center[1]+5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 1)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 1)
         return canvas
 
     def fileTextExtractor(self, case:str):
