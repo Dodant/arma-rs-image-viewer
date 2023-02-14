@@ -269,16 +269,13 @@ class ArmaViewer(QWidget):
             f.close()
 
     def extraDialog(self):
-        # msgBox = QMessageBox.about(self, "Hello Out There",
-        #                   "¯\_(ツ)_/¯       (づ ◕‿◕ )づ\nCopyright (c) 2023 Junggyun Oh. All rights reserved.\n<a href='https://github.com/Dodant/arma-rs-image-viewer'>Trolltech</a>")
         msgBox = QMessageBox()
         msgBox.setWindowTitle("Hello Out There")
         msgBox.setTextFormat(Qt.RichText)
         msg = "¯\_(ツ)_/¯ \
             <br> Copyright (c) 2023 Junggyun Oh. All rights reserved. \
-            <br> Please Report Bug and Additional Requirements Here  \
+            <br> Please Report Bug and Additional Requirements Here. And Give Me Star. \
             <br> => <a href='https://github.com/Dodant/arma-rs-image-viewer'>Dodant/arma-rs-image-viewer</a>"
-
         msgBox.setText(msg)
         msgBox.exec()
 
