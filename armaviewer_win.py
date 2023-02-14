@@ -12,6 +12,7 @@ import sys
 import random
 import re
 import glob
+from datetime import datetime
 
 import cv2
 import numpy as np
@@ -240,7 +241,7 @@ class ArmaViewer(QWidget):
         text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
         if ok:
             f = open(self.fileTextExtractor("folder_path") + '/report.csv', 'a')
-            f.write(f'{self.fileTextExtractor("pick_full_path")},{text}\n')
+            f.write(f'{self.fileTextExtractor("pick_full_path")},{datetime.now().strftime("%Y%m%d%H%M")}.,{text}\n')
             f.close()
 
     def initUI(self):
