@@ -11,11 +11,11 @@ import os.path as pth
 import sys
 import random
 import re
+import glob
 
 import cv2
 import numpy as np
 import pandas as pd
-import glob
 
 import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
@@ -142,7 +142,7 @@ class ArmaViewer(QWidget):
         self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
         for _, row in self.anno_file.iterrows():
             self.label_color[f'{row["main_class"]}-{row["middle_class"]}'] = \
-                (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                (random.randint(128, 255), random.randint(128, 255), random.randint(128, 255))
         if 0 in self.checked: canvas = self.plotCenteredPtsImage(canvas)
         if 1 in self.checked: canvas = self.plotBboxImage(canvas)
         if 2 in self.checked: canvas = self.plotLabelImage(canvas)
@@ -160,7 +160,7 @@ class ArmaViewer(QWidget):
         for _, row in self.anno_file.iterrows():
             pts = list(map(list, [row['x1':'y1'], row['x2':'y2'], row['x3':'y3'], row['x4':'y4']]))
             polygon = np.array([pts], dtype=np.int32)
-            cv2.polylines(canvas, [polygon], True, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 1)
+            cv2.polylines(canvas, [polygon], True, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
         return canvas
 
     def plotLabelImage(self, canvas):
@@ -168,7 +168,7 @@ class ArmaViewer(QWidget):
         for _, row in self.anno_file.iterrows():
             center = list(map(int, row['center_x':'center_y']))
             cv2.putText(canvas, f'{row["main_class"]}-{row["middle_class"]}', (center[0]+5, center[1]+5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 1)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
         return canvas
 
     def fileTextExtractor(self, case:str):
@@ -235,6 +235,13 @@ class ArmaViewer(QWidget):
         self.plot()
         self.changeImageInfo()
 
+    def reportDialog(self):
+        text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
+        if ok:
+            f = open(pth.join(self.fileTextExtractor("folder_path"),'report.csv'), 'a')
+            f.write(f'{self.fileTextExtractor("pick_full_path")},{text}\n')
+            f.close()
+
     def initUI(self):
         # Horizontal 폴더 열기 & 폴더명
         folderSelectBtn = QPushButton('폴더 열기', self)
@@ -299,13 +306,6 @@ class ArmaViewer(QWidget):
         self.resize(1000, 800)
         self.center()
         self.show()
-
-    def reportDialog(self):
-        text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
-        if ok:
-            f = open(pth.join(self.fileTextExtractor("folder_path"),'report.csv'), 'a')
-            f.write(f'{self.fileTextExtractor("pick_full_path")},{text}\n')
-            f.close()
 
     def createImageGroup(self):
         hbox = QHBoxLayout()
