@@ -87,7 +87,7 @@ class ArmaViewer(QWidget):
                                  "Select Dir [MAP]-[WEATHER]-[MONTH]-[DATE]\n"
                                  "EX) \'malden-sunny-10-08\'")
             return
-        t = re.compile('[0-9]{5}.classes_[A-Z].csv.result')
+        t = re.compile('[0-9]+.classes_[A-Z].csv.result')
         if t.match(self.fileTextExtractor('image_name')) is None:
             QMessageBox.critical(self, 'Wrong Image',
                                  "You pick the wrong image directory.\n"
