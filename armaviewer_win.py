@@ -162,7 +162,7 @@ class ArmaViewer(QWidget):
         for _, row in self.anno_file.iterrows():
             pts = list(map(list, [row['x1':'y1'], row['x2':'y2'], row['x3':'y3'], row['x4':'y4']]))
             polygon = np.array([pts], dtype=np.int32)
-            cv2.polylines(canvas, [polygon], True, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 1)
+            cv2.polylines(canvas, [polygon], True, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
         return canvas
 
     def plotLabelImage(self, canvas):
@@ -170,7 +170,7 @@ class ArmaViewer(QWidget):
         for _, row in self.anno_file.iterrows():
             center = list(map(int, row['center_x':'center_y']))
             cv2.putText(canvas, f'{row["main_class"]}-{row["middle_class"]}', (center[0]+5, center[1]+5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 1)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
         return canvas
 
     def fileTextExtractor(self, case:str):
@@ -187,7 +187,7 @@ class ArmaViewer(QWidget):
         # /home/dodant/Downloads/malden-sunny-10-08
         if case == 'folder_path': return '/'.join(self.fname.split('/')[:-3])
         # 00000.classes_W.csv.result
-        if case == 'image_name': return self.fname.split('/')[-3:-2][0]
+        if case == 'image_name': return pth.basename(pth.dirname(pth.dirname(self.fname)))
         # EO
         if case == 'img_type': return self.fname[-6:-4]
         if case == 'opposite_type':
@@ -240,7 +240,7 @@ class ArmaViewer(QWidget):
     def reportDialog(self):
         text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
         if ok:
-            f = open(self.fileTextExtractor("folder_path") + '/report.csv', 'a')
+            f = open(pth.join(self.fileTextExtractor("folder_path"),'report.csv'), 'a')
             f.write(f'{self.fileTextExtractor("pick_full_path")},{datetime.now().strftime("%Y%m%d%H%M")}.,{text}\n')
             f.close()
 

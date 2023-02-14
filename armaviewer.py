@@ -5,12 +5,12 @@
 # Created by Junggyun Oh on 02/06/2023.
 # Copyright (c) 2023 Junggyun Oh All rights reserved.
 #
-
 import os
 import os.path as pth
 import sys
 import random
 import re
+import math
 import glob
 from datetime import datetime
 
@@ -22,7 +22,7 @@ import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
-    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, QInputDialog
+    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, QInputDialog, QSizePolicy
 
 
 def getAbsoluteFilePath(directory):
@@ -66,9 +66,11 @@ class ArmaViewer(QWidget):
 
         self.center_checkbtn = QCheckBox('Center Point', self)
         self.bbox_checkbtn = QCheckBox('BBOX', self)
+        self.rbox_checkbtn = QCheckBox('Round Box', self)
         self.label_checkbtn = QCheckBox('Label', self)
         self.center_checkbtn.toggled.connect(self.checkboxToggle)
         self.bbox_checkbtn.toggled.connect(self.checkboxToggle)
+        self.rbox_checkbtn.toggled.connect(self.checkboxToggle)
         self.label_checkbtn.toggled.connect(self.checkboxToggle)
         self.initUI()
 
@@ -112,7 +114,8 @@ class ArmaViewer(QWidget):
         self.checked = []
         if self.center_checkbtn.isChecked(): self.checked.append(0)
         if self.bbox_checkbtn.isChecked(): self.checked.append(1)
-        if self.label_checkbtn.isChecked(): self.checked.append(2)
+        if self.rbox_checkbtn.isChecked(): self.checked.append(2)
+        if self.label_checkbtn.isChecked(): self.checked.append(3)
         self.plot()
 
     def plot(self):
@@ -125,18 +128,24 @@ class ArmaViewer(QWidget):
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
+            self.lbl_img.setScaledContents(True)
+            self.lbl_img.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             return
         if self.selected == 'EO':
             canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('eo_full_path')), cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
+            self.lbl_img.setScaledContents(True)
+            self.lbl_img.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             return
         if self.selected == 'IR':
             canvas = cv2.cvtColor(cv2.imread(self.fileTextExtractor('ir_full_path')), cv2.COLOR_BGR2RGB)
             canvas = self.plotCanvas(canvas)
             self.pixmap = QPixmap(q2n.array2qimage(canvas, normalize=False))
             self.lbl_img.setPixmap(self.pixmap)
+            self.lbl_img.setScaledContents(True)
+            self.lbl_img.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             return
 
     def plotCanvas(self, canvas):
@@ -146,7 +155,8 @@ class ArmaViewer(QWidget):
                 (random.randint(128, 255), random.randint(128, 255), random.randint(128, 255))
         if 0 in self.checked: canvas = self.plotCenteredPtsImage(canvas)
         if 1 in self.checked: canvas = self.plotBboxImage(canvas)
-        if 2 in self.checked: canvas = self.plotLabelImage(canvas)
+        if 2 in self.checked: canvas = self.plotRboxImage(canvas)
+        if 3 in self.checked: canvas = self.plotLabelImage(canvas)
         return canvas
 
     def plotCenteredPtsImage(self, canvas):
@@ -162,6 +172,18 @@ class ArmaViewer(QWidget):
             pts = list(map(list, [row['x1':'y1'], row['x2':'y2'], row['x3':'y3'], row['x4':'y4']]))
             polygon = np.array([pts], dtype=np.int32)
             cv2.polylines(canvas, [polygon], True, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
+        return canvas
+
+    def plotRboxImage(self, canvas):
+        def dist(center, point):
+            a, b = center[0] - point[0], center[1] - point[1]
+            return int(math.sqrt(a**2 + b**2))
+
+        self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
+        for _, row in self.anno_file.iterrows():
+            center = list(map(int, row['center_x':'center_y']))
+            cv2.circle(canvas, center, dist(center, row['x1':'y1']),
+                       self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
         return canvas
 
     def plotLabelImage(self, canvas):
@@ -182,11 +204,11 @@ class ArmaViewer(QWidget):
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/annotation.csv
         if case == 'annotation_path': return f'{pth.sep.join(self.fname.split(pth.sep)[:-2])}{pth.sep}annotations.csv'
         # malden-sunny-10-08
-        if case == 'folder_name': return pth.sep.join(self.fname.split(pth.sep)[-4:-3])
+        if case == 'folder_name': return pth.basename(pth.dirname(pth.dirname(pth.dirname(self.fname))))
         # /home/dodant/Downloads/malden-sunny-10-08
         if case == 'folder_path': return pth.sep.join(self.fname.split(pth.sep)[:-3])
         # 00000.classes_W.csv.result
-        if case == 'image_name': return self.fname.split(pth.sep)[-3:-2][0]
+        if case == 'image_name': return pth.basename(pth.dirname(pth.dirname(self.fname)))
         # EO
         if case == 'img_type': return self.fname[-6:-4]
         if case == 'opposite_type':
@@ -245,6 +267,8 @@ class ArmaViewer(QWidget):
 
     def initUI(self):
         # Horizontal 폴더 열기 & 폴더명
+        self.fileDialogOpen()
+
         folderSelectBtn = QPushButton('폴더 열기', self)
         folderSelectBtn.clicked.connect(self.fileDialogOpen)
 
@@ -293,14 +317,14 @@ class ArmaViewer(QWidget):
 
         # Total Vertical Layout
         vbox = QVBoxLayout()
-        vbox.addStretch(1)
+        # vbox.addStretch(1)
         vbox.addLayout(fhbox)
         vbox.addLayout(imageMixSortBox)
         vbox.addLayout(prenextBox)
         vbox.addLayout(hbox)
         vbox.addWidget(self.lbl_img)
         vbox.addWidget(reportBtn, alignment=Qt.AlignHCenter)
-        vbox.addStretch(1)
+        # vbox.addStretch(1)
 
         self.setLayout(vbox)
         self.setWindowTitle('ARMA3 RS Image Viewer')
@@ -321,6 +345,7 @@ class ArmaViewer(QWidget):
         hbox = QHBoxLayout()
         hbox.addWidget(self.center_checkbtn)
         hbox.addWidget(self.bbox_checkbtn)
+        hbox.addWidget(self.rbox_checkbtn)
         hbox.addWidget(self.label_checkbtn)
         groupbox = QGroupBox('Label Setting')
         groupbox.setLayout(hbox)
