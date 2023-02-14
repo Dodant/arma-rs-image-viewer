@@ -94,7 +94,7 @@ class ArmaViewer(QWidget):
             return
         self.fileLists = getAbsoluteFilePath(self.folderPath)
 
-        self.folderlabel.setText(f'폴더명 : {self.folderPath}')
+        self.folderlabel.setText(f'Folder Name : {self.folderPath}')
         EO, IR = self.countEOandIR()
         self.folderImagePairNumLabel.setText(f'Image PAIR: {len(self.fileLists)} | EO: {EO} | IR: {IR}')
         self.countEOandIR()
@@ -265,6 +265,9 @@ class ArmaViewer(QWidget):
             f.write(f'{self.fileTextExtractor("pick_full_path")},{datetime.now().strftime("%Y%m%d%H%M")}.,{text}\n')
             f.close()
 
+    def extraDialog(self):
+        QMessageBox.about(self, "Hello Out There", "(づ ◕‿◕ )づ\nCopyright (c) 2023 Junggyun Oh. All rights reserved.")
+
     def initUI(self):
         # Horizontal 폴더 열기 & 폴더명
         self.fileDialogOpen()
@@ -292,8 +295,8 @@ class ArmaViewer(QWidget):
         imageMixSortBox.addStretch(1)
 
         # Horizontal << file name >>
-        prevBtn = QPushButton('<<<', self)
-        nextBtn = QPushButton('>>>', self)
+        prevBtn = QPushButton('<< <<< <', self)
+        nextBtn = QPushButton('> >>> >>', self)
         prevBtn.clicked.connect(self.goToPrevImage)
         nextBtn.clicked.connect(self.goToNextImage)
 
@@ -312,19 +315,25 @@ class ArmaViewer(QWidget):
         hbox.addStretch(1)
 
         # Report Button
-        reportBtn = QPushButton('문제 신고하기', self)
+        reportBtn = QPushButton('Report Issue', self)
+        extraBtn = QPushButton('Hello Out There', self)
         reportBtn.clicked.connect(self.reportDialog)
+        extraBtn.clicked.connect(self.extraDialog)
+
+        hhbox = QHBoxLayout()
+        hhbox.addStretch(1)
+        hhbox.addWidget(reportBtn)
+        hhbox.addWidget(extraBtn)
+        hhbox.addStretch(1)
 
         # Total Vertical Layout
         vbox = QVBoxLayout()
-        # vbox.addStretch(1)
         vbox.addLayout(fhbox)
         vbox.addLayout(imageMixSortBox)
         vbox.addLayout(prenextBox)
         vbox.addLayout(hbox)
         vbox.addWidget(self.lbl_img)
-        vbox.addWidget(reportBtn, alignment=Qt.AlignHCenter)
-        # vbox.addStretch(1)
+        vbox.addLayout(hhbox)
 
         self.setLayout(vbox)
         self.setWindowTitle('ARMA3 RS Image Viewer')
