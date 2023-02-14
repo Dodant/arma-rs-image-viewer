@@ -104,8 +104,10 @@ class ArmaViewer(QWidget):
         self.plot()
         self.changeImageInfo()
 
-        if self.imgType == 'EO': self.eo_radiobtn.setChecked(True)
-        elif self.imgType == 'IR': self.ir_radiobtn.setChecked(True)
+        if self.imgType == 'EO':
+            self.eo_radiobtn.setChecked(True)
+        elif self.imgType == 'IR':
+            self.ir_radiobtn.setChecked(True)
 
     def countEOandIR(self):
         return [len(glob.glob(f'{self.fileTextExtractor("folder_path")}/*/IMG/{x}.png')) for x in ['EO', 'IR']]
@@ -177,7 +179,7 @@ class ArmaViewer(QWidget):
     def plotRboxImage(self, canvas):
         def dist(center, point):
             a, b = center[0] - point[0], center[1] - point[1]
-            return int(math.sqrt(a**2 + b**2))
+            return int(math.sqrt(a ** 2 + b ** 2))
 
         self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
         for _, row in self.anno_file.iterrows():
@@ -190,11 +192,12 @@ class ArmaViewer(QWidget):
         self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
         for _, row in self.anno_file.iterrows():
             center = list(map(int, row['center_x':'center_y']))
-            cv2.putText(canvas, f'{row["main_class"]}-{row["middle_class"]}', (center[0]+5, center[1]+5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
+            cv2.putText(canvas, f'{row["main_class"]}-{row["middle_class"]}', (center[0] + 5, center[1] + 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'],
+                        2)
         return canvas
 
-    def fileTextExtractor(self, case:str):
+    def fileTextExtractor(self, case: str):
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
         if case == 'pick_full_path': return self.fname
         # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
@@ -223,7 +226,7 @@ class ArmaViewer(QWidget):
         for button in self.btnGroup.buttons():
             if button is self.btnGroup.button(sign):
                 self.selected = button.text()  # EO, IR, EO+IR
-                if self.selected in ['EO','IR']:
+                if self.selected in ['EO', 'IR']:
                     self.imgType = self.selected
                     self.fname = pth.join(pth.dirname(self.fname), f'{self.imgType}.png')
                     self.checkboxToggle()
@@ -261,12 +264,23 @@ class ArmaViewer(QWidget):
     def reportDialog(self):
         text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
         if ok:
-            f = open(pth.join(self.fileTextExtractor("folder_path"),'report.csv'), 'a')
+            f = open(pth.join(self.fileTextExtractor("folder_path"), 'report.csv'), 'a')
             f.write(f'{self.fileTextExtractor("pick_full_path")},{datetime.now().strftime("%Y%m%d%H%M")}.,{text}\n')
             f.close()
 
     def extraDialog(self):
-        QMessageBox.about(self, "Hello Out There", "(づ ◕‿◕ )づ\nCopyright (c) 2023 Junggyun Oh. All rights reserved.")
+        # msgBox = QMessageBox.about(self, "Hello Out There",
+        #                   "¯\_(ツ)_/¯       (づ ◕‿◕ )づ\nCopyright (c) 2023 Junggyun Oh. All rights reserved.\n<a href='https://github.com/Dodant/arma-rs-image-viewer'>Trolltech</a>")
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle("Hello Out There")
+        msgBox.setTextFormat(Qt.RichText)
+        msg = "¯\_(ツ)_/¯ \
+            <br> Copyright (c) 2023 Junggyun Oh. All rights reserved. \
+            <br> Please Report Bug and Additional Requirements Here  \
+            <br> => <a href='https://github.com/Dodant/arma-rs-image-viewer'>Dodant/arma-rs-image-viewer</a>"
+
+        msgBox.setText(msg)
+        msgBox.exec()
 
     def initUI(self):
         # Horizontal 폴더 열기 & 폴더명
@@ -367,8 +381,10 @@ class ArmaViewer(QWidget):
         self.move(qr.topLeft())
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_A: self.goToPrevImage()
-        elif e.key() == Qt.Key_D: self.goToNextImage()
+        if e.key() == Qt.Key_A:
+            self.goToPrevImage()
+        elif e.key() == Qt.Key_D:
+            self.goToNextImage()
         elif e.key() == Qt.Key_W:
             self.selected = 'EO'
             self.fname = self.fileTextExtractor('eo_full_path')

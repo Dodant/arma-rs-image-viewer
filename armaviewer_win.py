@@ -266,7 +266,8 @@ class ArmaViewer(QWidget):
             f.close()
 
     def extraDialog(self):
-        QMessageBox.about(self, "Hello Out There", "(づ ◕‿◕ )づ\nCopyright (c) 2023 Junggyun Oh. All rights reserved.")
+        QMessageBox.about(self, "Hello Out There",
+                          "¯\_(ツ)_/¯      (づ ◕‿◕ )づ\nCopyright (c) 2023 Junggyun Oh. All rights reserved.")
 
     def initUI(self):
         # Horizontal 폴더 열기 & 폴더명
