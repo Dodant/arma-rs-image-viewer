@@ -15,6 +15,7 @@ import re
 import cv2
 import numpy as np
 import pandas as pd
+import glob
 
 import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
@@ -44,7 +45,7 @@ class ArmaViewer(QWidget):
         self.label_color = {}
 
         self.folderlabel = QLabel(f'폴더명 : {self.fname}', self)
-        self.folderImagePairNumLabel = QLabel('조회된 이미지 쌍 개수: None')
+        self.folderImagePairNumLabel = QLabel('Image PAIR: _ | EO: _ | IR: _')
         self.folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
         self.fileNumName = QLabel(f'n번째 파일 | 현재 파일명: {self.fname}')
 
@@ -91,7 +92,9 @@ class ArmaViewer(QWidget):
         self.fileLists = getAbsoluteFilePath(self.folderPath)
 
         self.folderlabel.setText(f'폴더명 : {self.folderPath}')
-        self.folderImagePairNumLabel.setText(f'조회된 이미지 쌍 개수: {len(self.fileLists)}')
+        EO, IR = self.countEOandIR()
+        self.folderImagePairNumLabel.setText(f'Image PAIR: {len(self.fileLists)} | EO: {EO} | IR: {IR}')
+        self.countEOandIR()
         self.imgType = self.fileTextExtractor('img_type')
         self.selected = self.imgType
         self.checkboxToggle()
@@ -100,6 +103,9 @@ class ArmaViewer(QWidget):
 
         if self.imgType == 'EO': self.eo_radiobtn.setChecked(True)
         elif self.imgType == 'IR': self.ir_radiobtn.setChecked(True)
+
+    def countEOandIR(self):
+        return [len(glob.glob(f'{self.fileTextExtractor("folder_path")}/*/IMG/{x}.png')) for x in ['EO', 'IR']]
 
     def checkboxToggle(self):
         self.checked = []
@@ -134,11 +140,9 @@ class ArmaViewer(QWidget):
 
     def plotCanvas(self, canvas):
         self.anno_file = pd.read_csv(self.fileTextExtractor('annotation_path'))
-
         for _, row in self.anno_file.iterrows():
             self.label_color[f'{row["main_class"]}-{row["middle_class"]}'] = \
                 (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
         if 0 in self.checked: canvas = self.plotCenteredPtsImage(canvas)
         if 1 in self.checked: canvas = self.plotBboxImage(canvas)
         if 2 in self.checked: canvas = self.plotLabelImage(canvas)
