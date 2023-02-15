@@ -85,7 +85,7 @@ class ArmaViewer(QWidget):
             QMessageBox.critical(self, 'Wrong Directory',
                                  "You pick the wrong directory.\n"
                                  "Select Dir [MAP]-[WEATHER]-[MONTH]-[DATE]\n"
-                                 "EX) \'malden-sunny-10-08\'")
+                                 "EX) \'malden-sunny-10-08 (Sample Data)\'")
             return
         t = re.compile('[0-9]+.classes_[A-Z].csv.result')
         if t.match(self.fileTextExtractor('image_name')) is None:
@@ -195,17 +195,17 @@ class ArmaViewer(QWidget):
         return canvas
 
     def fileTextExtractor(self, case:str):
-        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
+        # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/EO.png
         if case == 'pick_full_path': return self.fname
-        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/EO.png
+        # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/EO.png
         if case == 'eo_full_path': return pth.dirname(self.fname) + '/EO.png'
-        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/IMG/IR.png
+        # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/IR.png
         if case == 'ir_full_path': return pth.dirname(self.fname) + '/IR.png'
-        # /home/dodant/Downloads/malden-sunny-10-08/00000.classes_W.csv.result/annotation.csv
+        # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/annotation.csv
         if case == 'annotation_path': return '\\'.join(self.fname.split('/')[:-2]) + '\\' + 'annotations.csv'
-        # malden-sunny-10-08
+        # malden-sunny-10-08 (Sample Data)
         if case == 'folder_name': return pth.basename(pth.dirname(pth.dirname(pth.dirname(self.fname))))
-        # /home/dodant/Downloads/malden-sunny-10-08
+        # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)
         if case == 'folder_path': return '/'.join(self.fname.split('/')[:-3])
         # 00000.classes_W.csv.result
         if case == 'image_name': return pth.basename(pth.dirname(pth.dirname(self.fname)))
