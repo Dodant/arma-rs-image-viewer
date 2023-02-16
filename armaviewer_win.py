@@ -181,7 +181,7 @@ class ArmaViewer(QWidget):
         if 3 in self.checked: canvas = plotLabelImage(canvas)
         return canvas
 
-    def fileTextExtractor(self, case:str):
+    def fileExtractor(self, case:str):
         # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/EO.png
         if case == 'pick_full_path': return self.fname
         # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/EO.png
