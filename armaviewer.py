@@ -12,6 +12,7 @@ import random
 import re
 import math
 import glob
+import platform
 from datetime import datetime
 
 import cv2
@@ -183,28 +184,30 @@ class ArmaViewer(QWidget):
 
     def fileExtractor(self, case: str):
         # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/EO.png
-        if case == 'pick_full_path': return self.fname
-        # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/EO.png
-        if case == 'eo_full_path': return pth.join(pth.dirname(self.fname), 'EO.png')
+        if case == 'eo_full_path':
+            if platform.system() == 'Linux': return pth.join(pth.dirname(self.fname), 'EO.png')
+            if platform.system() == 'Windows': return pth.dirname(self.fname) + '/EO.png'
         # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/IMG/IR.png
-        if case == 'ir_full_path': return pth.join(pth.dirname(self.fname), 'IR.png')
+        if case == 'ir_full_path':
+            if platform.system() == 'Linux': return pth.join(pth.dirname(self.fname), 'IR.png')
+            if platform.system() == 'Windows': return pth.dirname(self.fname) + '/IR.png'
         # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)/00000.classes_W.csv.result/annotation.csv
-        if case == 'annotation_path': return f'{pth.sep.join(self.fname.split(pth.sep)[:-2])}{pth.sep}annotations.csv'
+        if case == 'annotation_path':
+            if platform.system() == 'Linux': return f'{pth.sep.join(self.fname.split(pth.sep)[:-2])}{pth.sep}annotations.csv'
+            if platform.system() == 'Windows': return '\\'.join(self.fname.split('/')[:-2]) + '\\' + 'annotations.csv'
         # malden-sunny-10-08 (Sample Data)
         if case == 'folder_name': return pth.basename(pth.dirname(pth.dirname(pth.dirname(self.fname))))
         # /home/dodant/Downloads/malden-sunny-10-08 (Sample Data)
-        if case == 'folder_path': return pth.sep.join(self.fname.split(pth.sep)[:-3])
+        if case == 'folder_path':
+            if platform.system() == 'Linux': return pth.sep.join(self.fname.split(pth.sep)[:-3])
+            if platform.system() == 'Windows': return '/'.join(self.fname.split('/')[:-3])
         # 00000.classes_W.csv.result
         if case == 'image_name': return pth.basename(pth.dirname(pth.dirname(self.fname)))
         # EO
         if case == 'img_type': return self.fname[-6:-4]
-        if case == 'opposite_type':
-            if self.fname[-6:-4] == 'EO': return 'IR'
-            if self.fname[-6:-4] == 'IR': return 'EO'
-        if case == 'opposite_type_path':
-            if self.fname[-6:-4] == 'EO': return pth.join(pth.dirname(self.fname), 'IR.png')
-            if self.fname[-6:-4] == 'IR': return pth.join(pth.dirname(self.fname), 'EO.png')
-        if case == 'now_index': return self.fileLists.index(pth.sep.join(self.fname.split(pth.sep)[:-2]))
+        if case == 'now_index':
+            if platform.system() == 'Linux': return self.fileLists.index(pth.sep.join(self.fname.split(pth.sep)[:-2]))
+            if platform.system() == 'Windows': return self.fileLists.index('\\'.join(self.fname.split('/')[:-2]))
 
     def btnClicked(self, sign):
         for button in self.btnGroup.buttons():
@@ -242,7 +245,7 @@ class ArmaViewer(QWidget):
         text, ok = QInputDialog.getMultiLineText(self, 'Report', "What\'s the issue?")
         if ok:
             f = open(pth.join(self.fileExtractor("folder_path"), 'report.csv'), 'a')
-            f.write(f'{self.fileExtractor("pick_full_path")},{datetime.now().strftime("%Y%m%d%H%M")}.,{text}\n')
+            f.write(f'{self.fname},{datetime.now().strftime("%Y%m%d%H%M")}.,{text}\n')
             f.close()
 
     def extraDialog(self):
