@@ -29,7 +29,6 @@ class ArmaViewer(QWidget):
     def __init__(self):
         super().__init__()
         self.fname: str = 'None'
-        self.folderPath: str = 'None'
         self.fileLists: list = []
         self.nowIndex: int = 0
         self.imgType: str = ''
@@ -38,10 +37,10 @@ class ArmaViewer(QWidget):
         self.anno_file = None
         self.label_color = {}
 
-        self.folderlabel = QLabel(f'폴더명 : {self.fname}', self)
+        self.folderlabel = QLabel(f'Folder Name : {self.fname}', self)
         self.folderImagePairNumLabel = QLabel('Image PAIR: _ | EO: _ | IR: _')
         self.folderImagePairNumLabel.setAlignment(Qt.AlignHCenter)
-        self.fileNumName = QLabel(f'n번째 파일 | 현재 파일명: {self.fname}')
+        self.fileNumName = QLabel(f'#0 | File Name : {self.fname}')
 
         self.pixmap = QPixmap(self.fname)
         self.lbl_img = QLabel()
@@ -80,7 +79,6 @@ class ArmaViewer(QWidget):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
-        self.folderPath = self.fileExtractor('folder_path')
         if re.compile('[a-z]+-[a-z]+-[0-9]+-[0-9]+').match(self.fileExtractor('folder_name')) is None:
             QMessageBox.critical(self, 'Wrong Directory',
                                  "You pick the wrong directory.\n "
@@ -92,9 +90,8 @@ class ArmaViewer(QWidget):
                                  "You pick the wrong image directory.\n "
                                  "EX) '00000.classes_W.csv.result'")
             return
-        self.fileLists = getAbsoluteFilePath(self.folderPath)
-
-        self.folderlabel.setText(f'Folder Name : {self.folderPath}')
+        self.fileLists = getAbsoluteFilePath(self.fileExtractor('folder_path'))
+        self.folderlabel.setText(f'Folder Name : {self.fileExtractor("folder_name")}')
         EO, IR = countEOandIR()
         self.folderImagePairNumLabel.setText(f'Image PAIR: {len(self.fileLists)} | EO: {EO} | IR: {IR}')
         self.selected = self.imgType = self.fileExtractor('img_type')
@@ -138,41 +135,41 @@ class ArmaViewer(QWidget):
 
     def plotCanvas(self, canvas):
 
-        def plotCenteredPtsImage(canvas):
+        def plotCenteredPtsImage(canvas_):
             self.anno_file = pd.read_csv(self.fileExtractor('annotation_path'))
-            for _, row in self.anno_file.iterrows():
-                center = list(map(int, row['center_x':'center_y']))
-                cv2.circle(canvas, center, 1, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
-            return canvas
+            for _, row_ in self.anno_file.iterrows():
+                center = list(map(int, row_['center_x':'center_y']))
+                cv2.circle(canvas_, center, 1, self.label_color[f'{row_["main_class"]}-{row_["middle_class"]}'], 2)
+            return canvas_
 
-        def plotBboxImage(canvas):
+        def plotBboxImage(canvas_):
             self.anno_file = pd.read_csv(self.fileExtractor('annotation_path'))
-            for _, row in self.anno_file.iterrows():
-                pts = list(map(list, [row['x1':'y1'], row['x2':'y2'], row['x3':'y3'], row['x4':'y4']]))
+            for _, row_ in self.anno_file.iterrows():
+                pts = list(map(list, [row_['x1':'y1'], row_['x2':'y2'], row_['x3':'y3'], row_['x4':'y4']]))
                 polygon = np.array([pts], dtype=np.int32)
-                cv2.polylines(canvas, [polygon], True, self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
-            return canvas
+                cv2.polylines(canvas_, [polygon], True, self.label_color[f'{row_["main_class"]}-{row_["middle_class"]}'], 2)
+            return canvas_
 
-        def plotRboxImage(canvas):
+        def plotRboxImage(canvas_):
 
-            def dist(center, point):
-                a, b = center[0] - point[0], center[1] - point[1]
+            def dist(center_, point):
+                a, b = center_[0] - point[0], center_[1] - point[1]
                 return int(math.sqrt(a ** 2 + b ** 2))
 
             self.anno_file = pd.read_csv(self.fileExtractor('annotation_path'))
-            for _, row in self.anno_file.iterrows():
-                center = list(map(int, row['center_x':'center_y']))
-                cv2.circle(canvas, center, dist(center, row['x1':'y1']), self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
-            return canvas
+            for _, row_ in self.anno_file.iterrows():
+                center = list(map(int, row_['center_x':'center_y']))
+                cv2.circle(canvas_, center, dist(center, row_['x1':'y1']), self.label_color[f'{row_["main_class"]}-{row_["middle_class"]}'], 2)
+            return canvas_
 
-        def plotLabelImage(canvas):
+        def plotLabelImage(canvas_):
             self.anno_file = pd.read_csv(self.fileExtractor('annotation_path'))
-            for _, row in self.anno_file.iterrows():
-                center = list(map(int, row['center_x':'center_y']))
-                cv2.putText(canvas, f'{row["main_class"]}-{row["middle_class"]}', (center[0] + 5, center[1] + 5),
+            for _, row_ in self.anno_file.iterrows():
+                center = list(map(int, row_['center_x':'center_y']))
+                cv2.putText(canvas_, f'{row_["main_class"]}-{row_["middle_class"]}', (center[0] + 5, center[1] + 5),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                            self.label_color[f'{row["main_class"]}-{row["middle_class"]}'], 2)
-            return canvas
+                            self.label_color[f'{row_["main_class"]}-{row_["middle_class"]}'], 2)
+            return canvas_
 
         self.anno_file = pd.read_csv(self.fileExtractor('annotation_path'))
         for _, row in self.anno_file.iterrows():
@@ -221,7 +218,7 @@ class ArmaViewer(QWidget):
                     self.changeImageAtAllOnce()
 
     def changeImageInfo(self):
-        self.fileNumName.setText(f'{self.fileExtractor("now_index")}번째 파일 | 현재 파일명: {self.fileExtractor("image_name")}')
+        self.fileNumName.setText(f'#{self.fileExtractor("now_index")} | File Name : {self.fileExtractor("image_name")}')
 
     def imageMix(self):
         random.shuffle(self.fileLists)
@@ -260,10 +257,9 @@ class ArmaViewer(QWidget):
         msgBox.exec()
 
     def initUI(self):
-        # Horizontal 폴더 열기 & 폴더명
         self.fileDialogOpen()
 
-        folderSelectBtn = QPushButton('폴더 열기', self)
+        folderSelectBtn = QPushButton('Open Folder', self)
         folderSelectBtn.clicked.connect(self.fileDialogOpen)
 
         fhbox = QHBoxLayout()
@@ -272,9 +268,8 @@ class ArmaViewer(QWidget):
         fhbox.addWidget(self.folderlabel)
         fhbox.addStretch(1)
 
-        # Horizontal 이미지 mix & sort
-        imageMixBtn = QPushButton('이미지 순서 섞기', self)
-        imageSortBtn = QPushButton('이미지 순서 정렬하기', self)
+        imageMixBtn = QPushButton('Shuffle Images', self)
+        imageSortBtn = QPushButton('Sort Images', self)
         imageMixBtn.clicked.connect(self.imageMix)
         imageSortBtn.clicked.connect(self.imageSorted)
 
@@ -285,7 +280,6 @@ class ArmaViewer(QWidget):
         imageMixSortBox.addWidget(imageSortBtn)
         imageMixSortBox.addStretch(1)
 
-        # Horizontal << file name >>
         prevBtn = QPushButton('<< <<< <', self)
         nextBtn = QPushButton('> >>> >>', self)
         prevBtn.clicked.connect(self.goToPrevImage)
@@ -298,14 +292,12 @@ class ArmaViewer(QWidget):
         prenextBox.addWidget(nextBtn)
         prenextBox.addStretch(1)
 
-        # Horizontal image & label group
         hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(self.createImageGroup())
         hbox.addWidget(self.createLabelGroup())
         hbox.addStretch(1)
 
-        # Report Button
         reportBtn = QPushButton('Report Issue', self)
         extraBtn = QPushButton('Hello Out There', self)
         reportBtn.clicked.connect(self.reportDialog)
@@ -317,7 +309,6 @@ class ArmaViewer(QWidget):
         hhbox.addWidget(extraBtn)
         hhbox.addStretch(1)
 
-        # Total Vertical Layout
         vbox = QVBoxLayout()
         vbox.addLayout(fhbox)
         vbox.addLayout(imageMixSortBox)
