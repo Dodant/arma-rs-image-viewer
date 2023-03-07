@@ -48,23 +48,13 @@ class ArmaViewer(QWidget):
         self.lbl_img = QLabel()
 
         self.btnGroup = QButtonGroup()
-        self.btnGroup.setExclusive(True)
-        self.eo_radiobtn = QRadioButton('EO', self)
-        self.ir_radiobtn = QRadioButton('IR', self)
-        self.eoir_radiobtn = QRadioButton('EO+IR', self)
-        self.btnGroup.addButton(self.eo_radiobtn, 1)
-        self.btnGroup.addButton(self.ir_radiobtn, 2)
-        self.btnGroup.addButton(self.eoir_radiobtn, 3)
-        self.btnGroup.buttonClicked[int].connect(self.btnClicked)
+        self.radioBtns = ['EO','IR','EO+IR']
 
         self.center_checkbtn = QCheckBox('Center Point', self)
         self.bbox_checkbtn = QCheckBox('BBOX', self)
         self.rbox_checkbtn = QCheckBox('Round Box', self)
         self.label_checkbtn = QCheckBox('Label', self)
-        self.center_checkbtn.toggled.connect(self.checkboxToggle)
-        self.bbox_checkbtn.toggled.connect(self.checkboxToggle)
-        self.rbox_checkbtn.toggled.connect(self.checkboxToggle)
-        self.label_checkbtn.toggled.connect(self.checkboxToggle)
+
         self.initUI()
 
     def fileDialogOpen(self):
@@ -99,10 +89,8 @@ class ArmaViewer(QWidget):
         self.selected = self.imgType = self.fileExtractor('img_type')
         self.changeImageAtAllOnce()
 
-        if self.imgType == 'EO':
-            self.eo_radiobtn.setChecked(True)
-        elif self.imgType == 'IR':
-            self.ir_radiobtn.setChecked(True)
+        if self.imgType == 'EO': self.btnGroup.button(1).setChecked(True)
+        elif self.imgType == 'IR': self.btnGroup.button(2).setChecked(True)
 
     def changeImageAtAllOnce(self):
         self.checkboxToggle()
@@ -228,15 +216,14 @@ class ArmaViewer(QWidget):
     def changeImageInfo(self):
         self.fileNumName.setText(f'#{self.fileExtractor("now_index")} | File Name : {self.fileExtractor("image_name")}')
 
-    def goToPrevImage(self):
-        self.nowIndex -= 1
-        if self.nowIndex < 0: self.nowIndex = len(self.fileLists) - 1
-        self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
-        self.changeImageAtAllOnce()
-
-    def goToNextImage(self):
-        self.nowIndex += 1
-        if self.nowIndex >= len(self.fileLists): self.nowIndex = 0
+    def goToImage(self):
+        if not self.fileLists: return
+        if self.sender().text() == '<<< << <':
+            self.nowIndex -= 1
+            if self.nowIndex < 0: self.nowIndex = len(self.fileLists) - 1
+        elif self.sender().text() == '> >> >>>':
+            self.nowIndex += 1
+            if self.nowIndex >= len(self.fileLists): self.nowIndex = 0
         self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
         self.changeImageAtAllOnce()
 
@@ -259,7 +246,6 @@ class ArmaViewer(QWidget):
         msgBox.exec()
 
     def initUI(self):
-        self.fileDialogOpen()
 
         folderSelectBtn = QPushButton('Open Folder', self)
         folderSelectBtn.clicked.connect(self.fileDialogOpen)
@@ -284,8 +270,8 @@ class ArmaViewer(QWidget):
 
         prevBtn = QPushButton('<<< << <', self)
         nextBtn = QPushButton('> >> >>>', self)
-        prevBtn.clicked.connect(self.goToPrevImage)
-        nextBtn.clicked.connect(self.goToNextImage)
+        prevBtn.clicked.connect(self.goToImage)
+        nextBtn.clicked.connect(self.goToImage)
 
         prenextBox = QHBoxLayout()
         prenextBox.addStretch(1)
@@ -325,23 +311,27 @@ class ArmaViewer(QWidget):
         self.center()
         self.show()
 
+        self.fileDialogOpen()
+
     def createImageGroup(self):
         hbox = QHBoxLayout()
-        hbox.addWidget(self.eo_radiobtn, alignment=Qt.AlignCenter)
-        hbox.addWidget(self.ir_radiobtn, alignment=Qt.AlignCenter)
-        hbox.addWidget(self.eoir_radiobtn, alignment=Qt.AlignCenter)
         groupbox = QGroupBox('Image Setting')
         groupbox.setLayout(hbox)
+        self.btnGroup.setExclusive(True)
+        for idx, item in enumerate(self.radioBtns):
+            btn = QRadioButton(item)
+            self.btnGroup.addButton(btn, idx+1)
+            hbox.addWidget(btn, alignment=Qt.AlignLeading)
+        self.btnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
     def createLabelGroup(self):
         hbox = QHBoxLayout()
-        hbox.addWidget(self.center_checkbtn, alignment=Qt.AlignCenter)
-        hbox.addWidget(self.bbox_checkbtn, alignment=Qt.AlignCenter)
-        hbox.addWidget(self.rbox_checkbtn, alignment=Qt.AlignCenter)
-        hbox.addWidget(self.label_checkbtn, alignment=Qt.AlignCenter)
         groupbox = QGroupBox('Label Setting')
         groupbox.setLayout(hbox)
+        for i in [self.center_checkbtn, self.bbox_checkbtn, self.rbox_checkbtn, self.label_checkbtn]:
+            hbox.addWidget(i, alignment=Qt.AlignCenter)
+            i.toggled.connect(self.checkboxToggle)
         return groupbox
 
     def center(self):
@@ -351,8 +341,8 @@ class ArmaViewer(QWidget):
         self.move(qr.topLeft())
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_A: self.goToPrevImage()
-        if e.key() == Qt.Key_D: self.goToNextImage()
+        if e.key() == Qt.Key_A: self.goToImage()
+        if e.key() == Qt.Key_D: self.goToImage()
         if e.key() == Qt.Key_W:
             self.selected = 'EO'
             self.fname = self.fileExtractor('eo_full_path')
